@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 大模型性能-价格斩杀线 2026</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #0d0d0f;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    min-height: 100vh;
+}
+.header {
+    text-align: center;
+    padding: 30px 20px 10px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0d0d0f 100%);
+}
+.header h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #cc785c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+.header .subtitle { color: #888; font-size: 0.95rem; }
+.header .date-badge {
+    display: inline-block;
+    background: #1e1e22;
+    border: 1px solid #444;
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: 8px;
+}
+.controls {
+    display: flex; justify-content: center; gap: 12px;
+    flex-wrap: wrap; padding: 15px 20px;
+    background: #111; border-top: 1px solid #222; border-bottom: 1px solid #222;
+}
+.controls label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; color: #aaa; cursor: pointer;
+}
+.controls select {
+    background: #1e1e22; border: 1px solid #333; color: #fff;
+    padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;
+}
+.controls input[type="range"] { width: 150px; }
+.vendor-filters {
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap; padding: 10px 20px;
+    background: #111; border-bottom: 1px solid #222;
+    position: relative;
+    z-index: 10;
+}
+.vendor-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #1e1e22; border: 1px solid #333; border-radius: 20px;
+    padding: 3px 12px; font-size: 0.8rem; cursor: pointer;
+    transition: all 0.2s; user-select: none;
+}
+.vendor-chip:hover { border-color: #555; }
+.vendor-chip.active { background: #222; border-color: #666; }
+.vendor-chip .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.vendor-more-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #2a2a30; border: 1px dashed #444; border-radius: 20px;
+    padding: 3px 14px; font-size: 0.8rem; cursor: pointer;
+    color: #888; transition: all 0.2s;
+}
+.vendor-more-btn:hover { border-color: #666; color: #aaa; background: #333; }
+.chart-container {
+    position: relative;
+    width: 100%;
+}
+#chart { width: 100%; height: 75vh; min-height: 550px; }
+.fullscreen-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    background: rgba(30,30,34,0.9);
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+.fullscreen-btn:hover { background: rgba(50,50,60,0.95); border-color: #666; color: #fff; }
+.chart-container.fullscreen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999;
+    background: #0d0d0f;
+}
+.chart-container.fullscreen #chart {
+    height: 100vh;
+}
+.info-panel { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 15px; margin-top: 15px;
+}
+.info-card {
+    background: #161618; border: 1px solid #222; border-radius: 10px;
+    padding: 18px; transition: border-color 0.2s;
+}
+.info-card:hover { border-color: #444; }
+.info-card h3 {
+    font-size: 1rem; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+}
+.info-card .icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px;
+}
+.info-card table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.info-card th {
+    text-align: left; color: #888; font-weight: 500;
+    padding: 6px 4px; border-bottom: 1px solid #222;
+}
+.info-card td { padding: 5px 4px; border-bottom: 1px solid #1a1a1a; }
+.info-card td.num { text-align: right; font-family: 'Consolas', monospace; }
+.info-card tr:hover { background: #1a1a1e; }
+.best-value { color: #4CAF50; font-weight: bold; }
+.top-perf { color: #cc785c; font-weight: bold; }
+.fastest { color: #34A853; font-weight: bold; }
+.footer {
+    text-align: center; padding: 20px; color: #555; font-size: 0.8rem;
+    border-top: 1px solid #1a1a1a;
+}
+.footer a { color: #666; text-decoration: none; }
+.footer a:hover { color: #aaa; }
+.search-container {
+    position: relative;
+    width: 300px;
+}
+.search-box {
+    width: 100%;
+    background: #1e1e22;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 14px 8px 38px;
+    border-radius: 24px;
+    font-size: 0.88rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.search-box:focus { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.15); }
+.search-box::placeholder { color: #555; }
+.search-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: #555; font-size: 14px;
+}
+.search-results {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    margin-top: 4px;
+    background: #1a1a1e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 999;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.search-results.show { display: block; }
+.search-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid #222;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.search-item:last-child { border-bottom: none; }
+.search-item:hover { background: #222; }
+.search-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.search-item .name { flex: 1; font-size: 0.82rem; }
+.search-item .meta { font-size: 0.72rem; color: #777; white-space: nowrap; }
+.search-item .meta .iq { color: #aaa; }
+.search-item .meta .cost { color: #666; }
+.search-highlight { color: #667eea; font-weight: bold; }
+.note-box {
+    max-width: 1200px;
+    margin: 10px auto;
+    padding: 8px 16px;
+    background: #1a1a14;
+    border: 1px solid #443300;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: #aa9;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>AI 大模型 性能-价格 斩杀线</h1>
+    <div class="subtitle">Intelligence Index vs Cost per Task · 交互式散点图</div>
+    <div class="date-badge" id="dateBadge">📅 加载中... · 数据来源: Artificial Analysis · 自动更新</div>
+</div>
+
+<div class="note-box">
+    💡 鼠标滚轮缩放（以鼠标位置为中心） · 拖动平移 · 双击重置 · 左上角"⛶ 全屏" · 右上角工具栏可下载PNG · 搜索框支持中英文模型名
+</div>
+
+<div class="controls">
+    <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-box" id="searchBox" placeholder="搜索模型，如 Claude、GPT、智谱、百度..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+    </div>
+    <label>X轴:
+<select id="xAxis" onchange="updateChart()">
+<option value="cost_per_task" selected>每任务成本 ($)</option>
+<option value="input_price_per_m">输入价格 ($/1M tokens)</option>
+<option value="output_price_per_m">输出价格 ($/1M tokens)</option>
+<option value="speed">输出速度 (tokens/s)</option>
+<option value="intelligence_index">智能指数</option>
+<option value="value_ratio">性价比 (IQ / $)</option>
+</select>
+    </label>
+    <label>Y轴:
+        <select id="yAxis" onchange="updateChart()">
+            <option value="intelligence_index" selected>智能指数</option>
+            <option value="agi_level">AGI 相对水平 (%)</option>
+            <option value="speed">输出速度 (tokens/s)</option>
+            <option value="value_ratio">性价比 (IQ / $)</option>
+        </select>
+    </label>
+    <label><input type="checkbox" id="showAGILines" checked onchange="updateChart()"> AGI 参考线</label>
+    <label>最低 IQ: <span id="iqLabel">5</span>
+        <input type="range" id="iqFilter" min="0" max="65" value="5" oninput="document.getElementById('iqLabel').textContent=this.value; updateChart()">
+    </label>
+    <label><input type="checkbox" id="showPareto" checked onchange="updateChart()"> 帕累托前沿</label>
+    <label><input type="checkbox" id="showLabels" checked onchange="updateChart()"> 显示标签</label>
+    <label><input type="checkbox" id="logX" checked onchange="updateChart()"> 对数X轴</label>
+</div>
+
+<div class="vendor-filters" id="vendorFilters"></div>
+
+<div class="chart-container" id="chartContainer">
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()">
+        <span id="fsIcon">⛶</span> <span id="fsText">全屏</span>
+    </button>
+    <div id="chart"></div>
+</div>
+
+<div class="info-panel">
+    <div class="info-grid" id="infoGrid"></div>
+</div>
+
+<div class="footer">
+    数据来源: <a href="https://artificialanalysis.ai/leaderboards/models" target="_blank">Artificial Analysis</a> · 自动抓取最新数据 ·
+    圆圈大小 = 输出速度 (tokens/s, 越大越快) · 虚线 = 帕累托前沿 · 点线 = AGI 水平参考线 (100% = 人类专家) · <span id="updateStatus" style="color:#4CAF50">✓ 已加载</span> <button id="manualUpdateBtn" onclick="manualUpdate()" style="background:#1e1e22;border:1px solid #444;color:#ccc;padding:3px 12px;border-radius:6px;cursor:pointer;font-size:0.78rem;transition:all 0.2s;" onmouseover="this.style.borderColor='#667eea';this.style.color='#fff'" onmouseout="this.style.borderColor='#444';this.style.color='#ccc'">🔄 手动更新</button>
+</div>
+
+<script>
+// ==================== 自动数据抓取 ====================
+const DATA_SOURCE = 'https://artificialanalysis.ai/leaderboards/models';
+const CORS_PROXIES = [
+    'https://corsproxy.io/?url=',
+    'https://api.allorigins.win/raw?url=',
+    'https://cors-anywhere.herokuapp.com/',
+];
+
+// 内置最新数据 (2026-09-06 快照，自动抓取失败时回退使用)
+const BUILTIN_DATA = [{"name":"Claude Fable 5.1 (max with fallback)","slug":"claude-fable-5-1-max-with-fallback","intelligence_index":57.0,"cost_per_task":6.12,"input_price_per_m":2.45,"output_price_per_m":12.24,"speed":68.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Fable 5.1 (max+fb)","display_name":"Claude Fable 5.1 (max+fb)","value_ratio":9.31},{"name":"Claude Fable 5.1 (xhigh with fallback)","slug":"claude-fable-5-1-xhigh-with-fallback","intelligence_index":56.0,"cost_per_task":4.64,"input_price_per_m":1.86,"output_price_per_m":9.28,"speed":65.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Fable 5.1 (xhigh+fb)","display_name":"Claude Fable 5.1 (xhigh+fb)","value_ratio":12.07},{"name":"GPT-6 Astra (max)","slug":"gpt-6-astra-max","intelligence_index":55.0,"cost_per_task":2.57,"input_price_per_m":1.03,"output_price_per_m":5.14,"speed":64.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (max)","display_name":"GPT-6 Astra (max)","value_ratio":21.4},{"name":"Claude Fable 5.1 (high with fallback)","slug":"claude-fable-5-1-high-with-fallback","intelligence_index":54.0,"cost_per_task":2.86,"input_price_per_m":1.14,"output_price_per_m":5.72,"speed":56.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Fable 5.1 (high+fb)","display_name":"Claude Fable 5.1 (high+fb)","value_ratio":18.88},{"name":"GPT-6 Astra (xhigh)","slug":"gpt-6-astra-xhigh","intelligence_index":54.0,"cost_per_task":1.85,"input_price_per_m":0.74,"output_price_per_m":3.7,"speed":60.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (xhigh)","display_name":"GPT-6 Astra (xhigh)","value_ratio":29.19},{"name":"Claude Opus 5 (max)","slug":"claude-opus-5-max","intelligence_index":54.0,"cost_per_task":4.21,"input_price_per_m":1.68,"output_price_per_m":8.42,"speed":56.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Opus 5 (max)","display_name":"Claude Opus 5 (max)","value_ratio":12.83},{"name":"Claude Opus 5 (xhigh)","slug":"claude-opus-5-xhigh","intelligence_index":53.0,"cost_per_task":3.36,"input_price_per_m":1.34,"output_price_per_m":6.72,"speed":53.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Opus 5 (xhigh)","display_name":"Claude Opus 5 (xhigh)","value_ratio":15.77},{"name":"GPT-6 Astra (high)","slug":"gpt-6-astra-high","intelligence_index":53.0,"cost_per_task":1.41,"input_price_per_m":0.56,"output_price_per_m":2.82,"speed":62.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (high)","display_name":"GPT-6 Astra (high)","value_ratio":37.59},{"name":"Claude Fable 5 (with fallback)","slug":"claude-fable-5-with-fallback","intelligence_index":53.0,"cost_per_task":5.62,"input_price_per_m":2.25,"output_price_per_m":11.24,"speed":63.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Claude Fable 5 (+fb)","display_name":"Claude Fable 5 (+fb)","value_ratio":9.43},{"name":"Muse Spark 1.3 (max)","slug":"muse-spark-1-3-max","intelligence_index":53.0,"cost_per_task":0.96,"input_price_per_m":0.38,"output_price_per_m":1.92,"speed":233.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Muse Spark 1.3 (max)","display_name":"Muse Spark 1.3 (max)","value_ratio":55.21},{"name":"Claude Fable 5.1 (medium with fallback)","slug":"claude-fable-5-1-medium-with-fallback","intelligence_index":53.0,"cost_per_task":2.14,"input_price_per_m":0.86,"output_price_per_m":4.28,"speed":56.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Fable 5.1 (medium+fb)","display_name":"Claude Fable 5.1 (medium+fb)","value_ratio":24.77},{"name":"GPT-6 Astra (medium)","slug":"gpt-6-astra-medium","intelligence_index":52.0,"cost_per_task":1.16,"input_price_per_m":0.46,"output_price_per_m":2.32,"speed":58.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (medium)","display_name":"GPT-6 Astra (medium)","value_ratio":44.83},{"name":"Claude Opus 5 (high)","slug":"claude-opus-5-high","intelligence_index":52.0,"cost_per_task":2.44,"input_price_per_m":0.98,"output_price_per_m":4.88,"speed":52.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Opus 5 (high)","display_name":"Claude Opus 5 (high)","value_ratio":21.31},{"name":"Muse Spark 1.3 (xhigh)","slug":"muse-spark-1-3-xhigh","intelligence_index":52.0,"cost_per_task":0.84,"input_price_per_m":0.34,"output_price_per_m":1.68,"speed":165.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Muse Spark 1.3 (xhigh)","display_name":"Muse Spark 1.3 (xhigh)","value_ratio":61.9},{"name":"GPT-5.6 Sol (max)","slug":"gpt-5-6-sol-max","intelligence_index":51.0,"cost_per_task":1.25,"input_price_per_m":0.5,"output_price_per_m":2.5,"speed":76.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (max)","display_name":"GPT-5.6 Sol (max)","value_ratio":40.8},{"name":"Claude Fable 5.1 (low with fallback)","slug":"claude-fable-5-1-low-with-fallback","intelligence_index":51.0,"cost_per_task":1.7,"input_price_per_m":0.68,"output_price_per_m":3.4,"speed":54.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Fable 5.1 (low+fb)","display_name":"Claude Fable 5.1 (low+fb)","value_ratio":30.0},{"name":"Grok 4.6 (high)","slug":"grok-4-6-high","intelligence_index":51.0,"cost_per_task":1.25,"input_price_per_m":0.5,"output_price_per_m":2.5,"speed":60.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.6 (high)","display_name":"xAI Grok 4.6 (high)","value_ratio":40.8},{"name":"Kimi K3 (max)","slug":"kimi-k3-max","intelligence_index":50.0,"cost_per_task":1.58,"input_price_per_m":0.63,"output_price_per_m":3.16,"speed":42.0,"creator":"Kimi","color":"#047AFE","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Kimi K3 (max)","display_name":"月之暗面 Kimi K3 (max)","value_ratio":31.65},{"name":"Grok 4.6 (xhigh)","slug":"grok-4-6-xhigh","intelligence_index":50.0,"cost_per_task":1.61,"input_price_per_m":0.64,"output_price_per_m":3.22,"speed":62.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.6 (xhigh)","display_name":"xAI Grok 4.6 (xhigh)","value_ratio":31.06},{"name":"GPT-5.6 Sol (xhigh)","slug":"gpt-5-6-sol-xhigh","intelligence_index":50.0,"cost_per_task":0.89,"input_price_per_m":0.36,"output_price_per_m":1.78,"speed":75.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (xhigh)","display_name":"GPT-5.6 Sol (xhigh)","value_ratio":56.18},{"name":"Claude Opus 5 (medium)","slug":"claude-opus-5-medium","intelligence_index":50.0,"cost_per_task":1.36,"input_price_per_m":0.54,"output_price_per_m":2.72,"speed":52.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Opus 5 (medium)","display_name":"Claude Opus 5 (medium)","value_ratio":36.76},{"name":"GPT-6 Astra (low)","slug":"gpt-6-astra-low","intelligence_index":49.0,"cost_per_task":0.63,"input_price_per_m":0.25,"output_price_per_m":1.26,"speed":59.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (low)","display_name":"GPT-6 Astra (low)","value_ratio":77.78},{"name":"Grok 4.6 (medium)","slug":"grok-4-6-medium","intelligence_index":49.0,"cost_per_task":0.95,"input_price_per_m":0.38,"output_price_per_m":1.9,"speed":61.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.6 (medium)","display_name":"xAI Grok 4.6 (medium)","value_ratio":51.58},{"name":"GLM-5.3 (max)","slug":"glm-5-3-max","intelligence_index":49.0,"cost_per_task":1.26,"input_price_per_m":0.5,"output_price_per_m":2.52,"speed":83.0,"creator":"Z AI","color":"#1c7ff8","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GLM-5.3 (max)","display_name":"智谱AI GLM-5.3 (max)","value_ratio":38.89},{"name":"GPT-5.6 Sol (high)","slug":"gpt-5-6-sol-high","intelligence_index":48.0,"cost_per_task":0.61,"input_price_per_m":0.24,"output_price_per_m":1.22,"speed":72.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (high)","display_name":"GPT-5.6 Sol (high)","value_ratio":78.69},{"name":"GPT-6 Astra (Non-reasoning)","slug":"gpt-6-astra-non-reasoning","intelligence_index":48.0,"cost_per_task":1.42,"input_price_per_m":0.57,"output_price_per_m":2.84,"speed":null,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-6 Astra (Non-reasoning)","display_name":"GPT-6 Astra (Non-reasoning)","value_ratio":33.8},{"name":"Gemini 3.8 Flash (high)","slug":"gemini-3-8-flash-high","intelligence_index":47.0,"cost_per_task":0.74,"input_price_per_m":0.3,"output_price_per_m":1.48,"speed":281.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.8 Flash (high)","display_name":"Gemini 3.8 Flash (high)","value_ratio":63.51},{"name":"Qwen3.8 Max","slug":"qwen3-8-max","intelligence_index":47.0,"cost_per_task":1.19,"input_price_per_m":0.48,"output_price_per_m":2.38,"speed":40.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.8 Max","display_name":"阿里巴巴 Qwen3.8 Max","value_ratio":39.5},{"name":"Muse Spark 1.2 (xhigh)","slug":"muse-spark-1-2-xhigh","intelligence_index":47.0,"cost_per_task":0.55,"input_price_per_m":0.22,"output_price_per_m":1.1,"speed":269.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Muse Spark 1.2 (xhigh)","display_name":"Muse Spark 1.2 (xhigh)","value_ratio":85.45},{"name":"Gemini 3.8 Flash (medium)","slug":"gemini-3-8-flash-medium","intelligence_index":47.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":246.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.8 Flash (medium)","display_name":"Gemini 3.8 Flash (medium)","value_ratio":0},{"name":"GPT-5.6 Terra (max)","slug":"gpt-5-6-terra-max","intelligence_index":47.0,"cost_per_task":0.81,"input_price_per_m":0.32,"output_price_per_m":1.62,"speed":114.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (max)","display_name":"GPT-5.6 Terra (max)","value_ratio":58.02},{"name":"Qwen3.8 2.4T A95B","slug":"qwen3-8-2-4t-a95b","intelligence_index":47.0,"cost_per_task":1.1,"input_price_per_m":0.44,"output_price_per_m":2.2,"speed":40.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.8 2.4T A95B","display_name":"阿里巴巴 Qwen3.8 2.4T A95B","value_ratio":42.73},{"name":"GLM-5.3-Flash","slug":"glm-5-3-flash","intelligence_index":46.0,"cost_per_task":0.18,"input_price_per_m":0.07,"output_price_per_m":0.36,"speed":51.0,"creator":"Z AI","color":"#1c7ff8","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"GLM-5.3-Flash","display_name":"智谱AI GLM-5.3-Flash","value_ratio":255.56},{"name":"GPT-5.6 Sol (medium)","slug":"gpt-5-6-sol-medium","intelligence_index":46.0,"cost_per_task":0.37,"input_price_per_m":0.15,"output_price_per_m":0.74,"speed":70.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (medium)","display_name":"GPT-5.6 Sol (medium)","value_ratio":124.32},{"name":"Qwen3.8-Flash-Next","slug":"qwen3-8-flash-next","intelligence_index":46.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":87.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.8-Flash-Next","display_name":"阿里巴巴 Qwen3.8-Flash-Next","value_ratio":0},{"name":"Grok 4.5 (high)","slug":"grok-4-5-high","intelligence_index":45.0,"cost_per_task":0.43,"input_price_per_m":0.17,"output_price_per_m":0.86,"speed":59.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.5 (high)","display_name":"xAI Grok 4.5 (high)","value_ratio":104.65},{"name":"Gemini 3.7 Flash (high)","slug":"gemini-3-7-flash-high","intelligence_index":45.0,"cost_per_task":0.55,"input_price_per_m":0.22,"output_price_per_m":1.1,"speed":305.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.7 Flash (high)","display_name":"Gemini 3.7 Flash (high)","value_ratio":81.82},{"name":"Claude Sonnet 5 (max)","slug":"claude-sonnet-5-max","intelligence_index":45.0,"cost_per_task":3.31,"input_price_per_m":1.32,"output_price_per_m":6.62,"speed":75.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Sonnet 5 (max)","display_name":"Claude Sonnet 5 (max)","value_ratio":13.6},{"name":"GPT-5.6 Terra (xhigh)","slug":"gpt-5-6-terra-xhigh","intelligence_index":44.0,"cost_per_task":0.5,"input_price_per_m":0.2,"output_price_per_m":1.0,"speed":100.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (xhigh)","display_name":"GPT-5.6 Terra (xhigh)","value_ratio":88.0},{"name":"Claude Opus 5 (low)","slug":"claude-opus-5-low","intelligence_index":44.0,"cost_per_task":0.64,"input_price_per_m":0.26,"output_price_per_m":1.28,"speed":53.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Opus 5 (low)","display_name":"Claude Opus 5 (low)","value_ratio":68.75},{"name":"GPT-5.6 Luna (max)","slug":"gpt-5-6-luna-max","intelligence_index":43.0,"cost_per_task":0.1,"input_price_per_m":0.04,"output_price_per_m":0.2,"speed":130.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (max)","display_name":"GPT-5.6 Luna (max)","value_ratio":430.0},{"name":"Gemini 3.7 Flash (medium)","slug":"gemini-3-7-flash-medium","intelligence_index":43.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":310.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.7 Flash (medium)","display_name":"Gemini 3.7 Flash (medium)","value_ratio":0},{"name":"DeepSeek V4 Pro 0813 (max)","slug":"deepseek-v4-pro-0813-max","intelligence_index":42.0,"cost_per_task":0.33,"input_price_per_m":0.13,"output_price_per_m":0.66,"speed":71.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Pro (max)","display_name":"深度求索 DeepSeek V4 Pro (max)","value_ratio":127.27},{"name":"GLM-5.2 (max)","slug":"glm-5-2-max","intelligence_index":42.0,"cost_per_task":0.56,"input_price_per_m":0.22,"output_price_per_m":1.12,"speed":76.0,"creator":"Z AI","color":"#1c7ff8","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GLM-5.2 (max)","display_name":"智谱AI GLM-5.2 (max)","value_ratio":75.0},{"name":"Grok 4.6 (low)","slug":"grok-4-6-low","intelligence_index":42.0,"cost_per_task":0.26,"input_price_per_m":0.1,"output_price_per_m":0.52,"speed":55.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.6 (low)","display_name":"xAI Grok 4.6 (low)","value_ratio":161.54},{"name":"GPT-5.6 Luna (xhigh)","slug":"gpt-5-6-luna-xhigh","intelligence_index":42.0,"cost_per_task":0.06,"input_price_per_m":0.02,"output_price_per_m":0.12,"speed":116.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (xhigh)","display_name":"GPT-5.6 Luna (xhigh)","value_ratio":700.0},{"name":"Qwen3.8 27B (xhigh)","slug":"qwen3-8-27b-xhigh","intelligence_index":41.0,"cost_per_task":0.57,"input_price_per_m":0.23,"output_price_per_m":1.14,"speed":47.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.8 27B (xhigh)","display_name":"阿里巴巴 Qwen3.8 27B (xhigh)","value_ratio":71.93},{"name":"GPT-5.6 Terra (high)","slug":"gpt-5-6-terra-high","intelligence_index":41.0,"cost_per_task":0.3,"input_price_per_m":0.12,"output_price_per_m":0.6,"speed":97.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (high)","display_name":"GPT-5.6 Terra (high)","value_ratio":136.67},{"name":"Gemini 3.7 Flash (low)","slug":"gemini-3-7-flash-low","intelligence_index":41.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":310.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.7 Flash (low)","display_name":"Gemini 3.7 Flash (low)","value_ratio":0},{"name":"Gemini 3.8 Flash (low)","slug":"gemini-3-8-flash-low","intelligence_index":41.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":265.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.8 Flash (low)","display_name":"Gemini 3.8 Flash (low)","value_ratio":0},{"name":"GPT-5.6 Sol (low)","slug":"gpt-5-6-sol-low","intelligence_index":41.0,"cost_per_task":0.23,"input_price_per_m":0.09,"output_price_per_m":0.46,"speed":71.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (low)","display_name":"GPT-5.6 Sol (low)","value_ratio":178.26},{"name":"DeepSeek V4 Flash 0731 (max)","slug":"deepseek-v4-flash-0731-max","intelligence_index":41.0,"cost_per_task":0.14,"input_price_per_m":0.06,"output_price_per_m":0.28,"speed":133.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Flash 0731 (max)","display_name":"深度求索 DeepSeek V4 Flash 0731 (max)","value_ratio":292.86},{"name":"DeepSeek V4 Flash Vision (max)","slug":"deepseek-v4-flash-vision-max","intelligence_index":41.0,"cost_per_task":0.19,"input_price_per_m":0.08,"output_price_per_m":0.38,"speed":123.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Flash Vision (max)","display_name":"深度求索 DeepSeek V4 Flash Vision (max)","value_ratio":215.79},{"name":"Gemini 3.6 Flash","slug":"gemini-3-6-flash","intelligence_index":40.0,"cost_per_task":0.36,"input_price_per_m":0.14,"output_price_per_m":0.72,"speed":218.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemini 3.6 Flash","display_name":"Gemini 3.6 Flash","value_ratio":111.11},{"name":"Agnes 2.5 Pro Beta","slug":"agnes-2-5-pro-beta","intelligence_index":40.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Sapiens AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Agnes 2.5 Pro Beta","display_name":"Agnes 2.5 Pro Beta","value_ratio":0},{"name":"Gemini 3.5 Flash (medium)","slug":"gemini-3-5-flash-medium","intelligence_index":38.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":207.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemini 3.5 Flash (medium)","display_name":"Gemini 3.5 Flash (medium)","value_ratio":0},{"name":"Motif 3","slug":"motif-3","intelligence_index":38.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Motif Technologies","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Motif 3","display_name":"Motif 3","value_ratio":0},{"name":"K2 Horizon 375B A23B","slug":"k2-horizon-375b-a23b","intelligence_index":38.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"MBZUAI Institute of Foundation Models","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"K2 Horizon 375B A23B","display_name":"K2 Horizon 375B A23B","value_ratio":0},{"name":"GPT-5.6 Luna (high)","slug":"gpt-5-6-luna-high","intelligence_index":37.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":114.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (high)","display_name":"GPT-5.6 Luna (high)","value_ratio":0},{"name":"GPT-5.6 Terra (medium)","slug":"gpt-5-6-terra-medium","intelligence_index":37.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":88.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (medium)","display_name":"GPT-5.6 Terra (medium)","value_ratio":0},{"name":"Kimi K3 (low)","slug":"kimi-k3-low","intelligence_index":37.0,"cost_per_task":0.25,"input_price_per_m":0.1,"output_price_per_m":0.5,"speed":44.0,"creator":"Kimi","color":"#047AFE","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Kimi K3 (low)","display_name":"月之暗面 Kimi K3 (low)","value_ratio":148.0},{"name":"GPT-5.3 Codex (xhigh)","slug":"gpt-5-3-codex-xhigh","intelligence_index":37.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":137.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.3 Codex (xhigh)","display_name":"GPT-5.3 Codex (xhigh)","value_ratio":0},{"name":"Motif 3 (Beta)","slug":"motif-3-beta","intelligence_index":37.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Motif Technologies","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Motif 3 (Beta)","display_name":"Motif 3 (Beta)","value_ratio":0},{"name":"Gemini 3.1 Pro Preview","slug":"gemini-3-1-pro-preview","intelligence_index":37.0,"cost_per_task":0.34,"input_price_per_m":0.14,"output_price_per_m":0.68,"speed":116.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemini 3.1 Pro Preview","display_name":"Gemini 3.1 Pro Preview","value_ratio":108.82},{"name":"MiniMax-M3","slug":"minimax-m3","intelligence_index":36.0,"cost_per_task":0.23,"input_price_per_m":0.09,"output_price_per_m":0.46,"speed":100.0,"creator":"MiniMax","color":"#ff5050","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"MiniMax-M3","display_name":"MiniMax-M3","value_ratio":156.52},{"name":"Qwen3.8 27B (medium)","slug":"qwen3-8-27b-medium","intelligence_index":35.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":53.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.8 27B (medium)","display_name":"阿里巴巴 Qwen3.8 27B (medium)","value_ratio":0},{"name":"Apodex 1.1","slug":"apodex-1-1","intelligence_index":35.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Apodex","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Apodex 1.1","display_name":"Apodex 1.1","value_ratio":0},{"name":"DeepSeek V4 Pro (high)","slug":"deepseek-v4-pro-high","intelligence_index":35.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":67.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Pro (high)","display_name":"深度求索 DeepSeek V4 Pro (high)","value_ratio":0},{"name":"DeepSeek V4 Pro (max)","slug":"deepseek-v4-pro-max","intelligence_index":35.0,"cost_per_task":0.05,"input_price_per_m":0.02,"output_price_per_m":0.1,"speed":73.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Pro (max)","display_name":"深度求索 DeepSeek V4 Pro (max)","value_ratio":700.0},{"name":"Quasar 438B (max)","slug":"quasar-438b-max","intelligence_index":34.0,"cost_per_task":0.9,"input_price_per_m":0.36,"output_price_per_m":1.8,"speed":168.0,"creator":"Multiverse Computing","color":"#0984e3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Quasar 438B (max)","display_name":"Quasar 438B (max)","value_ratio":37.78},{"name":"Kimi K2.7 Code","slug":"kimi-k2-7-code","intelligence_index":34.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":60.0,"creator":"Kimi","color":"#047AFE","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Kimi K2.7 Code","display_name":"月之暗面 Kimi K2.7 Code","value_ratio":0},{"name":"Qwen3.8 27B (low)","slug":"qwen3-8-27b-low","intelligence_index":34.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":53.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.8 27B (low)","display_name":"阿里巴巴 Qwen3.8 27B (low)","value_ratio":0},{"name":"Claude Sonnet 5 (Non-reasoning)","slug":"claude-sonnet-5-non-reasoning","intelligence_index":33.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":62.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Sonnet 5 (Non-reasoning)","display_name":"Claude Sonnet 5 (Non-reasoning)","value_ratio":0},{"name":"GPT-5.6 Sol (Non-reasoning)","slug":"gpt-5-6-sol-non-reasoning","intelligence_index":33.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":67.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Sol (Non-reasoning)","display_name":"GPT-5.6 Sol (Non-reasoning)","value_ratio":0},{"name":"Nex-N2-Pro","slug":"nex-n2-pro","intelligence_index":33.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":119.0,"creator":"Nex AGI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nex-N2-Pro","display_name":"Nex-N2-Pro","value_ratio":0},{"name":"Solar Pro 4","slug":"solar-pro-4","intelligence_index":33.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":84.0,"creator":"Upstage","color":"#7822f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Solar Pro 4","display_name":"Solar Pro 4","value_ratio":0},{"name":"MiMo-V2.5-Pro","slug":"mimo-v2-5-pro","intelligence_index":33.0,"cost_per_task":0.04,"input_price_per_m":0.02,"output_price_per_m":0.08,"speed":35.0,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiMo-V2.5-Pro","display_name":"小米 MiMo-V2.5-Pro","value_ratio":825.0},{"name":"Hy3","slug":"hy3","intelligence_index":32.0,"cost_per_task":0.04,"input_price_per_m":0.02,"output_price_per_m":0.08,"speed":99.0,"creator":"Tencent","color":"#00a4ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Hy3","display_name":"腾讯 Hy3","value_ratio":800.0},{"name":"GPT-5.6 Terra (low)","slug":"gpt-5-6-terra-low","intelligence_index":32.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":93.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (low)","display_name":"GPT-5.6 Terra (low)","value_ratio":0},{"name":"Inkling Small","slug":"inkling-small","intelligence_index":32.0,"cost_per_task":0.07,"input_price_per_m":0.03,"output_price_per_m":0.14,"speed":125.0,"creator":"Thinking Machines","color":"#6c5ce7","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Inkling Small","display_name":"Inkling Small","value_ratio":457.14},{"name":"Inkling","slug":"inkling","intelligence_index":32.0,"cost_per_task":0.44,"input_price_per_m":0.18,"output_price_per_m":0.88,"speed":72.0,"creator":"Thinking Machines","color":"#6c5ce7","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Inkling","display_name":"Inkling","value_ratio":72.73},{"name":"Qwen3.7 Plus","slug":"qwen3-7-plus","intelligence_index":32.0,"cost_per_task":0.17,"input_price_per_m":0.07,"output_price_per_m":0.34,"speed":56.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.7 Plus","display_name":"阿里巴巴 Qwen3.7 Plus","value_ratio":188.24},{"name":"JT-4.1 Flash 236B A21B","slug":"jt-4-1-flash-236b-a21b","intelligence_index":32.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"China Mobile","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"JT-4.1 Flash 236B A21B","display_name":"JT-4.1 Flash 236B A21B","value_ratio":0},{"name":"Agnes 2.5 Pro Alpha","slug":"agnes-2-5-pro-alpha","intelligence_index":31.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":185.0,"creator":"Sapiens AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Agnes 2.5 Pro Alpha","display_name":"Agnes 2.5 Pro Alpha","value_ratio":0},{"name":"GPT-5.6 Luna (medium)","slug":"gpt-5-6-luna-medium","intelligence_index":30.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":106.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (medium)","display_name":"GPT-5.6 Luna (medium)","value_ratio":0},{"name":"MiMo-V2.5","slug":"mimo-v2-5","intelligence_index":30.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":52.0,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiMo-V2.5","display_name":"小米 MiMo-V2.5","value_ratio":0},{"name":"MiMo-V2-Omni-0327","slug":"mimo-v2-omni-0327","intelligence_index":29.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiMo-V2-Omni-0327","display_name":"小米 MiMo-V2-Omni-0327","value_ratio":0},{"name":"Nemotron 3 Ultra","slug":"nemotron-3-ultra","intelligence_index":29.0,"cost_per_task":0.39,"input_price_per_m":0.16,"output_price_per_m":0.78,"speed":166.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3 Ultra","display_name":"Nemotron 3 Ultra","value_ratio":74.36},{"name":"Grok 4.3 (medium)","slug":"grok-4-3-medium","intelligence_index":29.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":129.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.3 (medium)","display_name":"xAI Grok 4.3 (medium)","value_ratio":0},{"name":"Solar Open2 250B","slug":"solar-open2-250b","intelligence_index":29.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Upstage","color":"#7822f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Solar Open2 250B","display_name":"Solar Open2 250B","value_ratio":0},{"name":"Qwen3.6 27B","slug":"qwen3-6-27b","intelligence_index":29.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":57.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.6 27B","display_name":"阿里巴巴 Qwen3.6 27B","value_ratio":0},{"name":"Grok 4.3 (low)","slug":"grok-4-3-low","intelligence_index":29.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":127.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.3 (low)","display_name":"xAI Grok 4.3 (low)","value_ratio":0},{"name":"MiMo-V2-Omni","slug":"mimo-v2-omni","intelligence_index":28.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiMo-V2-Omni","display_name":"小米 MiMo-V2-Omni","value_ratio":0},{"name":"Gemini 3.5 Flash (minimal)","slug":"gemini-3-5-flash-minimal","intelligence_index":28.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":187.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemini 3.5 Flash (minimal)","display_name":"Gemini 3.5 Flash (minimal)","value_ratio":0},{"name":"Gemini 3.5 Flash-Lite","slug":"gemini-3-5-flash-lite","intelligence_index":28.0,"cost_per_task":0.08,"input_price_per_m":0.03,"output_price_per_m":0.16,"speed":338.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemini 3.5 Flash-Lite","display_name":"Gemini 3.5 Flash-Lite","value_ratio":350.0},{"name":"Claude Sonnet 4.6 (Non-reasoning, low)","slug":"claude-sonnet-4-6-non-reasoning-low","intelligence_index":27.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":45.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude Sonnet 4.6 (Non-reasoning, low)","display_name":"Claude Sonnet 4.6 (Non-reasoning, low)","value_ratio":0},{"name":"Ling 3.0 Flash","slug":"ling-3-0-flash","intelligence_index":27.0,"cost_per_task":0.03,"input_price_per_m":0.01,"output_price_per_m":0.06,"speed":322.0,"creator":"InclusionAI","color":"#00d4aa","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ling 3.0 Flash","display_name":"蚂蚁集团 Ling 3.0 Flash","value_ratio":900.0},{"name":"A.X-K2","slug":"a-x-k2","intelligence_index":27.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"SK Telecom","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"A.X-K2","display_name":"A.X-K2","value_ratio":0},{"name":"GLM-5.2 (Non-reasoning)","slug":"glm-5-2-non-reasoning","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":121.0,"creator":"Z AI","color":"#1c7ff8","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GLM-5.2 (Non-reasoning)","display_name":"智谱AI GLM-5.2 (Non-reasoning)","value_ratio":0},{"name":"Qwen3.8 27B","slug":"qwen3-8-27b","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":52.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.8 27B","display_name":"阿里巴巴 Qwen3.8 27B","value_ratio":0},{"name":"MiMo-V2-Flash (Feb 2026)","slug":"mimo-v2-flash-feb-2026","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiMo-V2-Flash (Feb 2026)","display_name":"小米 MiMo-V2-Flash (Feb 2026)","value_ratio":0},{"name":"GPT-5.6 Terra (Non-reasoning)","slug":"gpt-5-6-terra-non-reasoning","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":90.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Terra (Non-reasoning)","display_name":"GPT-5.6 Terra (Non-reasoning)","value_ratio":0},{"name":"Qwen3.6 35B A3B","slug":"qwen3-6-35b-a3b","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":130.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.6 35B A3B","display_name":"阿里巴巴 Qwen3.6 35B A3B","value_ratio":0},{"name":"Qwen3.5 397B A17B","slug":"qwen3-5-397b-a17b","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":90.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 397B A17B","display_name":"阿里巴巴 Qwen3.5 397B A17B","value_ratio":0},{"name":"LongCat 2.0","slug":"longcat-2-0","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":51.0,"creator":"LongCat","color":"#ff4d4f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LongCat 2.0","display_name":"美团 LongCat 2.0","value_ratio":0},{"name":"GPT-5.6 Luna (low)","slug":"gpt-5-6-luna-low","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":102.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (low)","display_name":"GPT-5.6 Luna (low)","value_ratio":0},{"name":"G9v3-39A5B","slug":"g9v3-39a5b","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"AI9Stars","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"G9v3-39A5B","display_name":"G9v3-39A5B","value_ratio":0},{"name":"KAT-Coder-Pro V2","slug":"kat-coder-pro-v2","intelligence_index":26.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"KwaiKAT","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"KAT-Coder-Pro V2","display_name":"KAT-Coder-Pro V2","value_ratio":0},{"name":"Qwen3.5 397B A17B (Non-reasoning)","slug":"qwen3-5-397b-a17b-non-reasoning","intelligence_index":25.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":87.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 397B A17B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 397B A17B (Non-reasoning)","value_ratio":0},{"name":"Qwen3.5 122B A10B","slug":"qwen3-5-122b-a10b","intelligence_index":25.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":131.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 122B A10B","display_name":"阿里巴巴 Qwen3.5 122B A10B","value_ratio":0},{"name":"DeepSeek V4 Pro (Non-reasoning)","slug":"deepseek-v4-pro-non-reasoning","intelligence_index":25.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":69.0,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Pro (Non-reasoning)","display_name":"深度求索 DeepSeek V4 Pro (Non-reasoning)","value_ratio":0},{"name":"Muse Glimmer (high)","slug":"muse-glimmer-high","intelligence_index":24.0,"cost_per_task":0.04,"input_price_per_m":0.02,"output_price_per_m":0.08,"speed":102.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Muse Glimmer (high)","display_name":"Muse Glimmer (high)","value_ratio":600.0},{"name":"Qwen3.5 Omni Plus","slug":"qwen3-5-omni-plus","intelligence_index":24.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":120.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 Omni Plus","display_name":"阿里巴巴 Qwen3.5 Omni Plus","value_ratio":0},{"name":"Ring-2.6-1T","slug":"ring-2-6-1t","intelligence_index":24.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":126.0,"creator":"InclusionAI","color":"#00d4aa","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ring-2.6-1T","display_name":"蚂蚁集团 Ring-2.6-1T","value_ratio":0},{"name":"o3","slug":"o3","intelligence_index":24.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":151.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"o3","display_name":"o3","value_ratio":0},{"name":"Qwen3.6 27B (Non-reasoning)","slug":"qwen3-6-27b-non-reasoning","intelligence_index":23.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":56.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.6 27B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.6 27B (Non-reasoning)","value_ratio":0},{"name":"K-EXAONE 2.0","slug":"k-exaone-2-0","intelligence_index":23.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"K-EXAONE 2.0","display_name":"K-EXAONE 2.0","value_ratio":0},{"name":"Step 3.7 Flash","slug":"step-3-7-flash","intelligence_index":23.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":79.0,"creator":"StepFun","color":"#7c3aed","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Step 3.7 Flash","display_name":"阶跃星辰 Step 3.7 Flash","value_ratio":0},{"name":"Mistral Medium 3.5","slug":"mistral-medium-3-5","intelligence_index":23.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":148.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Mistral Medium 3.5","display_name":"Mistral Medium 3.5","value_ratio":0},{"name":"Claude 4.5 Haiku","slug":"claude-4-5-haiku","intelligence_index":22.0,"cost_per_task":0.2,"input_price_per_m":0.08,"output_price_per_m":0.4,"speed":93.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Claude 4.5 Haiku","display_name":"Claude 4.5 Haiku","value_ratio":110.0},{"name":"Gemma 4 31B","slug":"gemma-4-31b","intelligence_index":22.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":35.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 4 31B","display_name":"Gemma 4 31B","value_ratio":0},{"name":"DeepSeek V4 Flash (Non-reasoning)","slug":"deepseek-v4-flash-non-reasoning","intelligence_index":22.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"DeepSeek","color":"#4d6b6b","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"DeepSeek V4 Flash (Non-reasoning)","display_name":"深度求索 DeepSeek V4 Flash (Non-reasoning)","value_ratio":0},{"name":"JT-35B-Flash","slug":"jt-35b-flash","intelligence_index":22.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"China Mobile","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"JT-35B-Flash","display_name":"JT-35B-Flash","value_ratio":0},{"name":"GPT-5.5 Instant (June 2026)","slug":"gpt-5-5-instant-june-2026","intelligence_index":22.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":136.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"GPT-5.5 Instant (June 2026)","display_name":"GPT-5.5 Instant (June 2026)","value_ratio":0},{"name":"MiMo-V2.5-Pro (Non-reasoning)","slug":"mimo-v2-5-pro-non-reasoning","intelligence_index":21.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":33.0,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"MiMo-V2.5-Pro (Non-reasoning)","display_name":"小米 MiMo-V2.5-Pro (Non-reasoning)","value_ratio":0},{"name":"Qwen3.5 122B A10B (Non-reasoning)","slug":"qwen3-5-122b-a10b-non-reasoning","intelligence_index":21.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":145.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 122B A10B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 122B A10B (Non-reasoning)","value_ratio":0},{"name":"Doubao Seed Code","slug":"doubao-seed-code","intelligence_index":20.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"ByteDance Seed","color":"#3c8ce0","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Doubao Seed Code","display_name":"字节跳动 Doubao Seed Code","value_ratio":0},{"name":"GPT-5.6 Luna (Non-reasoning)","slug":"gpt-5-6-luna-non-reasoning","intelligence_index":19.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":112.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"GPT-5.6 Luna (Non-reasoning)","display_name":"GPT-5.6 Luna (Non-reasoning)","value_ratio":0},{"name":"Gemma 4 26B A4B","slug":"gemma-4-26b-a4b","intelligence_index":19.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 4 26B A4B","display_name":"Gemma 4 26B A4B","value_ratio":0},{"name":"Nemotron 3 Super","slug":"nemotron-3-super","intelligence_index":19.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":141.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3 Super","display_name":"Nemotron 3 Super","value_ratio":0},{"name":"MiMo-V2-Flash (Non-reasoning)","slug":"mimo-v2-flash-non-reasoning","intelligence_index":18.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Xiaomi","color":"#ff6900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"MiMo-V2-Flash (Non-reasoning)","display_name":"小米 MiMo-V2-Flash (Non-reasoning)","value_ratio":0},{"name":"Grok 4.3 (Non-reasoning)","slug":"grok-4-3-non-reasoning","intelligence_index":17.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":121.0,"creator":"SpaceXAI","color":"#736cd3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Grok 4.3 (Non-reasoning)","display_name":"xAI Grok 4.3 (Non-reasoning)","value_ratio":0},{"name":"Claude 4.5 Haiku (Non-reasoning)","slug":"claude-4-5-haiku-non-reasoning","intelligence_index":17.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":81.0,"creator":"Anthropic","color":"#cc785c","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Claude 4.5 Haiku (Non-reasoning)","display_name":"Claude 4.5 Haiku (Non-reasoning)","value_ratio":0},{"name":"Qwen3.6 35B A3B (Non-reasoning)","slug":"qwen3-6-35b-a3b-non-reasoning","intelligence_index":17.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":136.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.6 35B A3B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.6 35B A3B (Non-reasoning)","value_ratio":0},{"name":"Qwen3.5 35B A3B (Non-reasoning)","slug":"qwen3-5-35b-a3b-non-reasoning","intelligence_index":17.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":164.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 35B A3B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 35B A3B (Non-reasoning)","value_ratio":0},{"name":"Granite 4.2 30B","slug":"granite-4-2-30b","intelligence_index":17.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":59.0,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.2 30B","display_name":"Granite 4.2 30B","value_ratio":0},{"name":"Nemotron 3.5 Lightning","slug":"nemotron-3-5-lightning","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":292.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3.5 Lightning","display_name":"Nemotron 3.5 Lightning","value_ratio":0},{"name":"K-EXAONE","slug":"k-exaone","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"K-EXAONE","display_name":"K-EXAONE","value_ratio":0},{"name":"Ling 3.0 Tiny","slug":"ling-3-0-tiny","intelligence_index":16.0,"cost_per_task":0.0,"input_price_per_m":0,"output_price_per_m":0,"speed":113.0,"creator":"InclusionAI","color":"#00d4aa","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ling 3.0 Tiny","display_name":"蚂蚁集团 Ling 3.0 Tiny","value_ratio":0},{"name":"ERNIE 5.0 Thinking Preview","slug":"ernie-5-0-thinking-preview","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Baidu","color":"#2932e1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"ERNIE 5.0 Thinking Preview","display_name":"百度 ERNIE 5.0 Thinking Preview","value_ratio":0},{"name":"Command A+","slug":"command-a-plus","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":231.0,"creator":"Cohere","color":"#39594d","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Command A+","display_name":"Command A+","value_ratio":0},{"name":"gpt-oss-120b (high)","slug":"gpt-oss-120b-high","intelligence_index":16.0,"cost_per_task":0.12,"input_price_per_m":0.05,"output_price_per_m":0.24,"speed":189.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"gpt-oss-120b (high)","display_name":"gpt-oss-120b (high)","value_ratio":133.33},{"name":"Gemma 4 12B","slug":"gemma-4-12b","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":113.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 4 12B","display_name":"Gemma 4 12B","value_ratio":0},{"name":"Nova 2.0 Pro Preview (medium)","slug":"nova-2-0-pro-preview-medium","intelligence_index":16.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":119.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Pro Preview (medium)","display_name":"Nova 2.0 Pro Preview (medium)","value_ratio":0},{"name":"Gemma 4 31B (Non-reasoning)","slug":"gemma-4-31b-non-reasoning","intelligence_index":15.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":60.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemma 4 31B (Non-reasoning)","display_name":"Gemma 4 31B (Non-reasoning)","value_ratio":0},{"name":"Mercury 2","slug":"mercury-2","intelligence_index":15.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":710.0,"creator":"Inception","color":"#00b894","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Mercury 2","display_name":"Mercury 2","value_ratio":0},{"name":"Qwen3.5 9B","slug":"qwen3-5-9b","intelligence_index":15.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":82.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 9B","display_name":"阿里巴巴 Qwen3.5 9B","value_ratio":0},{"name":"Nova 2.0 Omni (medium)","slug":"nova-2-0-omni-medium","intelligence_index":15.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Omni (medium)","display_name":"Nova 2.0 Omni (medium)","value_ratio":0},{"name":"Apriel-v1.6-15B-Thinker","slug":"apriel-v1-6-15b-thinker","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"ServiceNow","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Apriel-v1.6-15B-Thinker","display_name":"Apriel-v1.6-15B-Thinker","value_ratio":0},{"name":"Qwen3 Coder Next","slug":"qwen3-coder-next","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":115.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3 Coder Next","display_name":"阿里巴巴 Qwen3 Coder Next","value_ratio":0},{"name":"Nova 2.0 Lite (high)","slug":"nova-2-0-lite-high","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":165.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Lite (high)","display_name":"Nova 2.0 Lite (high)","value_ratio":0},{"name":"Qwen3.5 9B (Non-reasoning)","slug":"qwen3-5-9b-non-reasoning","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":80.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 9B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 9B (Non-reasoning)","value_ratio":0},{"name":"EXAONE 4.5 33B","slug":"exaone-4-5-33b","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"EXAONE 4.5 33B","display_name":"EXAONE 4.5 33B","value_ratio":0},{"name":"Granite 4.2 8B","slug":"granite-4-2-8b","intelligence_index":14.0,"cost_per_task":0.02,"input_price_per_m":0.01,"output_price_per_m":0.04,"speed":120.0,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.2 8B","display_name":"Granite 4.2 8B","value_ratio":700.0},{"name":"Gemma 4 26B A4B (Non-reasoning)","slug":"gemma-4-26b-a4b-non-reasoning","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":81.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemma 4 26B A4B (Non-reasoning)","display_name":"Gemma 4 26B A4B (Non-reasoning)","value_ratio":0},{"name":"Qwen3.5 4B","slug":"qwen3-5-4b","intelligence_index":14.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":21.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 4B","display_name":"阿里巴巴 Qwen3.5 4B","value_ratio":0},{"name":"North Mini Code","slug":"north-mini-code","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":58.0,"creator":"Cohere","color":"#39594d","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"North Mini Code","display_name":"North Mini Code","value_ratio":0},{"name":"Nova 2.0 Pro Preview (low)","slug":"nova-2-0-pro-preview-low","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":120.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Pro Preview (low)","display_name":"Nova 2.0 Pro Preview (low)","value_ratio":0},{"name":"Nova 2.0 Lite (medium)","slug":"nova-2-0-lite-medium","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":164.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Lite (medium)","display_name":"Nova 2.0 Lite (medium)","value_ratio":0},{"name":"Qwen3.5 Omni Flash","slug":"qwen3-5-omni-flash","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":236.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 Omni Flash","display_name":"阿里巴巴 Qwen3.5 Omni Flash","value_ratio":0},{"name":"Mistral Small 4","slug":"mistral-small-4","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":164.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Mistral Small 4","display_name":"Mistral Small 4","value_ratio":0},{"name":"Devstral 2","slug":"devstral-2","intelligence_index":13.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":148.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Devstral 2","display_name":"Devstral 2","value_ratio":0},{"name":"JT-MINI","slug":"jt-mini","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"China Mobile","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"JT-MINI","display_name":"JT-MINI","value_ratio":0},{"name":"Trinity Large Thinking","slug":"trinity-large-thinking","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":320.0,"creator":"Arcee AI","color":"#5b21b6","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Trinity Large Thinking","display_name":"Trinity Large Thinking","value_ratio":0},{"name":"Magistral Medium 1.2","slug":"magistral-medium-1-2","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Magistral Medium 1.2","display_name":"Magistral Medium 1.2","value_ratio":0},{"name":"Nova 2.0 Lite (low)","slug":"nova-2-0-lite-low","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":172.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Lite (low)","display_name":"Nova 2.0 Lite (low)","value_ratio":0},{"name":"HyperNova 60B 2605 (high)","slug":"hypernova-60b-2605-high","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":349.0,"creator":"Multiverse Computing","color":"#0984e3","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"HyperNova 60B 2605 (high)","display_name":"HyperNova 60B 2605 (high)","value_ratio":0},{"name":"Nemotron Cascade 2 30B A3B","slug":"nemotron-cascade-2-30b-a3b","intelligence_index":12.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron Cascade 2 30B A3B","display_name":"Nemotron Cascade 2 30B A3B","value_ratio":0},{"name":"K2 Think V2","slug":"k2-think-v2","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"MBZUAI Institute of Foundation Models","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"K2 Think V2","display_name":"K2 Think V2","value_ratio":0},{"name":"LongCat Flash Lite","slug":"longcat-flash-lite","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LongCat","color":"#ff4d4f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LongCat Flash Lite","display_name":"美团 LongCat Flash Lite","value_ratio":0},{"name":"Devstral Small 2","slug":"devstral-small-2","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":140.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Devstral Small 2","display_name":"Devstral Small 2","value_ratio":0},{"name":"Mistral Large 3","slug":"mistral-large-3","intelligence_index":11.0,"cost_per_task":0.07,"input_price_per_m":0.03,"output_price_per_m":0.14,"speed":77.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Mistral Large 3","display_name":"Mistral Large 3","value_ratio":157.14},{"name":"HyperCLOVA X SEED Think (32B)","slug":"hyperclova-x-seed-think-32b","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Naver","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"HyperCLOVA X SEED Think (32B)","display_name":"HyperCLOVA X SEED Think (32B)","value_ratio":0},{"name":"K-EXAONE (Non-reasoning)","slug":"k-exaone-non-reasoning","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"K-EXAONE (Non-reasoning)","display_name":"K-EXAONE (Non-reasoning)","value_ratio":0},{"name":"Granite 4.2 3B","slug":"granite-4-2-3b","intelligence_index":11.0,"cost_per_task":0.01,"input_price_per_m":0.0,"output_price_per_m":0.02,"speed":205.0,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.2 3B","display_name":"Granite 4.2 3B","value_ratio":1100.0},{"name":"Qwen3 Next 80B A3B (Reasoning)","slug":"qwen3-next-80b-a3b-reasoning","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":196.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3 Next 80B A3B (Reasoning)","display_name":"阿里巴巴 Qwen3 Next 80B A3B (Reasoning)","value_ratio":0},{"name":"Nova 2.0 Omni (low)","slug":"nova-2-0-omni-low","intelligence_index":11.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Omni (low)","display_name":"Nova 2.0 Omni (low)","value_ratio":0},{"name":"Mi:dm K 2.5 Pro","slug":"mi-dm-k-2-5-pro","intelligence_index":10.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Korea Telecom","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Mi:dm K 2.5 Pro","display_name":"Mi:dm K 2.5 Pro","value_ratio":0},{"name":"G9v3-3B","slug":"g9v3-3b","intelligence_index":10.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"AI9Stars","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"G9v3-3B","display_name":"G9v3-3B","value_ratio":0},{"name":"Qwen3.5 4B (Non-reasoning)","slug":"qwen3-5-4b-non-reasoning","intelligence_index":10.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":17.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 4B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 4B (Non-reasoning)","value_ratio":0},{"name":"INTELLECT-3","slug":"intellect-3","intelligence_index":10.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Prime Intellect","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"INTELLECT-3","display_name":"INTELLECT-3","value_ratio":0},{"name":"Solar Open 100B","slug":"solar-open-100b","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Upstage","color":"#7822f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Solar Open 100B","display_name":"Solar Open 100B","value_ratio":0},{"name":"gpt-oss-20b (high)","slug":"gpt-oss-20b-high","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":208.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"gpt-oss-20b (high)","display_name":"gpt-oss-20b (high)","value_ratio":0},{"name":"Nemotron 3 Nano Omni 30B A3B","slug":"nemotron-3-nano-omni-30b-a3b","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":325.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3 Nano Omni 30B A3B","display_name":"Nemotron 3 Nano Omni 30B A3B","value_ratio":0},{"name":"gpt-oss-120b (low)","slug":"gpt-oss-120b-low","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":244.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"gpt-oss-120b (low)","display_name":"gpt-oss-120b (low)","value_ratio":0},{"name":"Nemotron 3 Nano","slug":"nemotron-3-nano","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":166.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3 Nano","display_name":"Nemotron 3 Nano","value_ratio":0},{"name":"Solar Pro 3","slug":"solar-pro-3","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":132.0,"creator":"Upstage","color":"#7822f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Solar Pro 3","display_name":"Solar Pro 3","value_ratio":0},{"name":"Llama 4 Maverick","slug":"llama-4-maverick","intelligence_index":9.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":86.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 4 Maverick","display_name":"Llama 4 Maverick","value_ratio":0},{"name":"Nova 2.0 Pro Preview (Non-reasoning)","slug":"nova-2-0-pro-preview-non-reasoning","intelligence_index":8.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":117.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Pro Preview (Non-reasoning)","display_name":"Nova 2.0 Pro Preview (Non-reasoning)","value_ratio":0},{"name":"gpt-oss-20b (low)","slug":"gpt-oss-20b-low","intelligence_index":8.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":228.0,"creator":"OpenAI","color":"#1f1f1f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"gpt-oss-20b (low)","display_name":"gpt-oss-20b (low)","value_ratio":0},{"name":"K2-V2 (high)","slug":"k2-v2-high","intelligence_index":8.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"MBZUAI Institute of Foundation Models","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"K2-V2 (high)","display_name":"K2-V2 (high)","value_ratio":0},{"name":"Qwen3 Next 80B A3B","slug":"qwen3-next-80b-a3b","intelligence_index":8.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":179.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3 Next 80B A3B","display_name":"阿里巴巴 Qwen3 Next 80B A3B","value_ratio":0},{"name":"Celeris-1","slug":"celeris-1","intelligence_index":8.0,"cost_per_task":0.18,"input_price_per_m":0.07,"output_price_per_m":0.36,"speed":null,"creator":"Celeris","color":"#a29bfe","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Celeris-1","display_name":"Celeris-1","value_ratio":44.44},{"name":"DiffusionGemma 26B A4B","slug":"diffusiongemma-26b-a4b","intelligence_index":8.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"DiffusionGemma 26B A4B","display_name":"DiffusionGemma 26B A4B","value_ratio":0},{"name":"Gemma 4 12B (Non-reasoning)","slug":"gemma-4-12b-non-reasoning","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":105.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemma 4 12B (Non-reasoning)","display_name":"Gemma 4 12B (Non-reasoning)","value_ratio":0},{"name":"Motif-2-12.7B","slug":"motif-2-12-7b","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Motif Technologies","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Motif-2-12.7B","display_name":"Motif-2-12.7B","value_ratio":0},{"name":"Nova Premier","slug":"nova-premier","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":33.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nova Premier","display_name":"Nova Premier","value_ratio":0},{"name":"K2-V2 (medium)","slug":"k2-v2-medium","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"MBZUAI Institute of Foundation Models","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"K2-V2 (medium)","display_name":"K2-V2 (medium)","value_ratio":0},{"name":"Llama Nemotron Super 49B v1.5","slug":"llama-nemotron-super-49b-v1-5","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":23.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama Nemotron Super 49B v1.5","display_name":"Llama Nemotron Super 49B v1.5","value_ratio":0},{"name":"Mistral Small 4 (Non-reasoning)","slug":"mistral-small-4-non-reasoning","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":149.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Mistral Small 4 (Non-reasoning)","display_name":"Mistral Small 4 (Non-reasoning)","value_ratio":0},{"name":"Tri-21B-Think","slug":"tri-21b-think","intelligence_index":7.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Trillion Labs","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Tri-21B-Think","display_name":"Tri-21B-Think","value_ratio":0},{"name":"Gemma 4 E4B","slug":"gemma-4-e4b","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":39.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 4 E4B","display_name":"Gemma 4 E4B","value_ratio":0},{"name":"MiniCPM5-1B","slug":"minicpm5-1b","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"OpenBMB","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiniCPM5-1B","display_name":"MiniCPM5-1B","value_ratio":0},{"name":"Sarvam 105B (high)","slug":"sarvam-105b-high","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Sarvam","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Sarvam 105B (high)","display_name":"Sarvam 105B (high)","value_ratio":0},{"name":"Nova 2.0 Lite (Non-reasoning)","slug":"nova-2-0-lite-non-reasoning","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":164.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Lite (Non-reasoning)","display_name":"Nova 2.0 Lite (Non-reasoning)","value_ratio":0},{"name":"MiniCPM5-1B (Non-reasoning)","slug":"minicpm5-1b-non-reasoning","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"OpenBMB","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"MiniCPM5-1B (Non-reasoning)","display_name":"MiniCPM5-1B (Non-reasoning)","value_ratio":0},{"name":"Magistral Small 1.2","slug":"magistral-small-1-2","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Magistral Small 1.2","display_name":"Magistral Small 1.2","value_ratio":0},{"name":"Ministral 3 14B","slug":"ministral-3-14b","intelligence_index":6.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":93.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ministral 3 14B","display_name":"Ministral 3 14B","value_ratio":0},{"name":"Nanbeige4.1-3B","slug":"nanbeige4-1-3b","intelligence_index":5.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Nanbeige","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nanbeige4.1-3B","display_name":"Nanbeige4.1-3B","value_ratio":0},{"name":"LFM2.5-2.6B","slug":"lfm2-5-2-6b","intelligence_index":5.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":201.0,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2.5-2.6B","display_name":"LFM2.5-2.6B","value_ratio":0},{"name":"EXAONE 4.0 32B","slug":"exaone-4-0-32b","intelligence_index":5.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"EXAONE 4.0 32B","display_name":"EXAONE 4.0 32B","value_ratio":0},{"name":"Nova 2.0 Omni (Non-reasoning)","slug":"nova-2-0-omni-non-reasoning","intelligence_index":5.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nova 2.0 Omni (Non-reasoning)","display_name":"Nova 2.0 Omni (Non-reasoning)","value_ratio":0},{"name":"Llama 4 Scout","slug":"llama-4-scout","intelligence_index":5.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":95.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 4 Scout","display_name":"Llama 4 Scout","value_ratio":0},{"name":"Hermes 4 70B","slug":"hermes-4-70b","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Hermes 4 70B","display_name":"Hermes 4 70B","value_ratio":0},{"name":"Falcon-H1R-7B","slug":"falcon-h1r-7b","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"TII UAE","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Falcon-H1R-7B","display_name":"Falcon-H1R-7B","value_ratio":0},{"name":"Gemma 4 E2B","slug":"gemma-4-e2b","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 4 E2B","display_name":"Gemma 4 E2B","value_ratio":0},{"name":"Qwen3 Omni 30B A3B (Reasoning)","slug":"qwen3-omni-30b-a3b-reasoning","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":100.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3 Omni 30B A3B (Reasoning)","display_name":"阿里巴巴 Qwen3 Omni 30B A3B (Reasoning)","value_ratio":0},{"name":"Step3 VL 10B","slug":"step3-vl-10b","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"StepFun","color":"#7c3aed","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Step3 VL 10B","display_name":"阶跃星辰 Step3 VL 10B","value_ratio":0},{"name":"Llama 3.3 70B","slug":"llama-3-3-70b","intelligence_index":4.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":91.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 3.3 70B","display_name":"Llama 3.3 70B","value_ratio":0},{"name":"Ministral 3 8B","slug":"ministral-3-8b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":95.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ministral 3 8B","display_name":"Ministral 3 8B","value_ratio":0},{"name":"Llama Nemotron Ultra","slug":"llama-nemotron-ultra","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":52.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama Nemotron Ultra","display_name":"Llama Nemotron Ultra","value_ratio":0},{"name":"ERNIE 4.5 300B A47B","slug":"ernie-4-5-300b-a47b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Baidu","color":"#2932e1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"ERNIE 4.5 300B A47B","display_name":"百度 ERNIE 4.5 300B A47B","value_ratio":0},{"name":"Hermes 4 405B","slug":"hermes-4-405b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":41.0,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Hermes 4 405B","display_name":"Hermes 4 405B","value_ratio":0},{"name":"NVIDIA Nemotron Nano 12B v2 VL","slug":"nvidia-nemotron-nano-12b-v2-vl","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":18.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"NVIDIA Nemotron Nano 12B v2 VL","display_name":"NVIDIA Nemotron Nano 12B v2 VL","value_ratio":0},{"name":"Gemma 4 E4B (Non-reasoning)","slug":"gemma-4-e4b-non-reasoning","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":42.0,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemma 4 E4B (Non-reasoning)","display_name":"Gemma 4 E4B (Non-reasoning)","value_ratio":0},{"name":"Granite 4.1 30B","slug":"granite-4-1-30b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.1 30B","display_name":"Granite 4.1 30B","value_ratio":0},{"name":"NVIDIA Nemotron Nano 9B V2","slug":"nvidia-nemotron-nano-9b-v2","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":97.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"NVIDIA Nemotron Nano 9B V2","display_name":"NVIDIA Nemotron Nano 9B V2","value_ratio":0},{"name":"Hermes 4 405B (Non-reasoning)","slug":"hermes-4-405b-non-reasoning","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":40.0,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Hermes 4 405B (Non-reasoning)","display_name":"Hermes 4 405B (Non-reasoning)","value_ratio":0},{"name":"Nemotron 3 Nano 4B","slug":"nemotron-3-nano-4b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nemotron 3 Nano 4B","display_name":"Nemotron 3 Nano 4B","value_ratio":0},{"name":"Llama Nemotron Super 49B v1.5 (Non-reasoning)","slug":"llama-nemotron-super-49b-v1-5-non-reasoning","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":19.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Llama Nemotron Super 49B v1.5 (Non-reasoning)","display_name":"Llama Nemotron Super 49B v1.5 (Non-reasoning)","value_ratio":0},{"name":"K2-V2 (low)","slug":"k2-v2-low","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"MBZUAI Institute of Foundation Models","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"K2-V2 (low)","display_name":"K2-V2 (low)","value_ratio":0},{"name":"Kimi Linear 48B A3B Instruct","slug":"kimi-linear-48b-a3b-instruct","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Kimi","color":"#047AFE","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Kimi Linear 48B A3B Instruct","display_name":"月之暗面 Kimi Linear 48B A3B Instruct","value_ratio":0},{"name":"Llama 3.1 405B","slug":"llama-3-1-405b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 3.1 405B","display_name":"Llama 3.1 405B","value_ratio":0},{"name":"LFM2.5-8B-A1B","slug":"lfm2-5-8b-a1b","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2.5-8B-A1B","display_name":"LFM2.5-8B-A1B","value_ratio":0},{"name":"Ring-flash-2.0","slug":"ring-flash-2-0","intelligence_index":3.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"InclusionAI","color":"#00d4aa","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ring-flash-2.0","display_name":"蚂蚁集团 Ring-flash-2.0","value_ratio":0},{"name":"Olmo 3.1 32B Think","slug":"olmo-3-1-32b-think","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Olmo 3.1 32B Think","display_name":"Olmo 3.1 32B Think","value_ratio":0},{"name":"Command A","slug":"command-a","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":61.0,"creator":"Cohere","color":"#39594d","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Command A","display_name":"Command A","value_ratio":0},{"name":"Qwen3.5 2B","slug":"qwen3-5-2b","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 2B","display_name":"阿里巴巴 Qwen3.5 2B","value_ratio":0},{"name":"Llama 3.1 Nemotron 70B","slug":"llama-3-1-nemotron-70b","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":15.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 3.1 Nemotron 70B","display_name":"Llama 3.1 Nemotron 70B","value_ratio":0},{"name":"Nemotron 3 Nano (Non-reasoning)","slug":"nemotron-3-nano-non-reasoning","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":219.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Nemotron 3 Nano (Non-reasoning)","display_name":"Nemotron 3 Nano (Non-reasoning)","value_ratio":0},{"name":"NVIDIA Nemotron Nano 9B V2 (Non-reasoning)","slug":"nvidia-nemotron-nano-9b-v2-non-reasoning","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":137.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"NVIDIA Nemotron Nano 9B V2 (Non-reasoning)","display_name":"NVIDIA Nemotron Nano 9B V2 (Non-reasoning)","value_ratio":0},{"name":"Ministral 3 3B","slug":"ministral-3-3b","intelligence_index":2.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":193.0,"creator":"Mistral","color":"#fa520f","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Ministral 3 3B","display_name":"Ministral 3 3B","value_ratio":0},{"name":"Hermes 4 70B (Non-reasoning)","slug":"hermes-4-70b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Hermes 4 70B (Non-reasoning)","display_name":"Hermes 4 70B (Non-reasoning)","value_ratio":0},{"name":"Granite 4.1 8B","slug":"granite-4-1-8b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":101.0,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.1 8B","display_name":"Granite 4.1 8B","value_ratio":0},{"name":"Sarvam 30B (high)","slug":"sarvam-30b-high","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Sarvam","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Sarvam 30B (high)","display_name":"Sarvam 30B (high)","value_ratio":0},{"name":"Gemma 3 270M","slug":"gemma-3-270m","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Gemma 3 270M","display_name":"Gemma 3 270M","value_ratio":0},{"name":"Qwen3.5 2B (Non-reasoning)","slug":"qwen3-5-2b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 2B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 2B (Non-reasoning)","value_ratio":0},{"name":"Qwen3 Omni 30B A3B","slug":"qwen3-omni-30b-a3b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":95.0,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3 Omni 30B A3B","display_name":"阿里巴巴 Qwen3 Omni 30B A3B","value_ratio":0},{"name":"Granite 4.0 Micro","slug":"granite-4-0-micro","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 Micro","display_name":"Granite 4.0 Micro","value_ratio":0},{"name":"Phi-4 Multimodal","slug":"phi-4-multimodal","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":17.0,"creator":"Microsoft","color":"#00a1f1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Phi-4 Multimodal","display_name":"Phi-4 Multimodal","value_ratio":0},{"name":"EXAONE 4.0 32B (Non-reasoning)","slug":"exaone-4-0-32b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"EXAONE 4.0 32B (Non-reasoning)","display_name":"EXAONE 4.0 32B (Non-reasoning)","value_ratio":0},{"name":"Olmo 3 7B Think","slug":"olmo-3-7b-think","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Olmo 3 7B Think","display_name":"Olmo 3 7B Think","value_ratio":0},{"name":"Nova Micro","slug":"nova-micro","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":276.0,"creator":"Amazon","color":"#ff9900","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Nova Micro","display_name":"Nova Micro","value_ratio":0},{"name":"LFM2.5-VL-1.6B","slug":"lfm2-5-vl-1-6b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2.5-VL-1.6B","display_name":"LFM2.5-VL-1.6B","value_ratio":0},{"name":"Molmo2-8B","slug":"molmo2-8b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Molmo2-8B","display_name":"Molmo2-8B","value_ratio":0},{"name":"Qwen3.5 0.8B (Non-reasoning)","slug":"qwen3-5-0-8b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Qwen3.5 0.8B (Non-reasoning)","display_name":"阿里巴巴 Qwen3.5 0.8B (Non-reasoning)","value_ratio":0},{"name":"MiniCPM-V 4.6 1.3B","slug":"minicpm-v-4-6-1-3b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"OpenBMB","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"MiniCPM-V 4.6 1.3B","display_name":"MiniCPM-V 4.6 1.3B","value_ratio":0},{"name":"LFM2.5-1.2B-Instruct","slug":"lfm2-5-1-2b-instruct","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2.5-1.2B-Instruct","display_name":"LFM2.5-1.2B-Instruct","value_ratio":0},{"name":"Apertus 70B Instruct","slug":"apertus-70b-instruct","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Swiss AI Initiative","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Apertus 70B Instruct","display_name":"Apertus 70B Instruct","value_ratio":0},{"name":"Granite 4.0 350M","slug":"granite-4-0-350m","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 350M","display_name":"Granite 4.0 350M","value_ratio":0},{"name":"LFM2.5-1.2B-Thinking","slug":"lfm2-5-1-2b-thinking","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2.5-1.2B-Thinking","display_name":"LFM2.5-1.2B-Thinking","value_ratio":0},{"name":"Granite 4.0 H Small","slug":"granite-4-0-h-small","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":26.0,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 H Small","display_name":"Granite 4.0 H Small","value_ratio":0},{"name":"Llama 3.2 11B (Vision)","slug":"llama-3-2-11b-vision","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":21.0,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 3.2 11B (Vision)","display_name":"Llama 3.2 11B (Vision)","value_ratio":0},{"name":"LFM2 8B A1B","slug":"lfm2-8b-a1b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2 8B A1B","display_name":"LFM2 8B A1B","value_ratio":0},{"name":"LFM2 2.6B","slug":"lfm2-2-6b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2 2.6B","display_name":"LFM2 2.6B","value_ratio":0},{"name":"Gemma 4 E2B (Non-reasoning)","slug":"gemma-4-e2b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Google","color":"#4285f4","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Gemma 4 E2B (Non-reasoning)","display_name":"Gemma 4 E2B (Non-reasoning)","value_ratio":0},{"name":"Jamba 1.7 Large","slug":"jamba-1-7-large","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"AI21 Labs","color":"#6c5ce7","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Jamba 1.7 Large","display_name":"Jamba 1.7 Large","value_ratio":0},{"name":"Tiny Aya Global","slug":"tiny-aya-global","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Cohere","color":"#39594d","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Tiny Aya Global","display_name":"Tiny Aya Global","value_ratio":0},{"name":"Exaone 4.0 1.2B (Non-reasoning)","slug":"exaone-4-0-1-2b-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Exaone 4.0 1.2B (Non-reasoning)","display_name":"Exaone 4.0 1.2B (Non-reasoning)","value_ratio":0},{"name":"Apertus 8B Instruct","slug":"apertus-8b-instruct","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Swiss AI Initiative","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Apertus 8B Instruct","display_name":"Apertus 8B Instruct","value_ratio":0},{"name":"Olmo 3 7B","slug":"olmo-3-7b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Olmo 3 7B","display_name":"Olmo 3 7B","value_ratio":0},{"name":"Granite 4.1 3B","slug":"granite-4-1-3b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.1 3B","display_name":"Granite 4.1 3B","value_ratio":0},{"name":"Olmo 3.1 32B Instruct","slug":"olmo-3-1-32b-instruct","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Olmo 3.1 32B Instruct","display_name":"Olmo 3.1 32B Instruct","value_ratio":0},{"name":"R1 1776","slug":"r1-1776","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Perplexity","color":"#20b2aa","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"R1 1776","display_name":"R1 1776","value_ratio":0},{"name":"Llama 3.2 90B (Vision)","slug":"llama-3-2-90b-vision","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Meta","color":"#0866ff","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Llama 3.2 90B (Vision)","display_name":"Llama 3.2 90B (Vision)","value_ratio":0},{"name":"Phi-4 Mini","slug":"phi-4-mini","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":45.0,"creator":"Microsoft","color":"#00a1f1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Phi-4 Mini","display_name":"Phi-4 Mini","value_ratio":0},{"name":"Granite 4.0 1B","slug":"granite-4-0-1b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 1B","display_name":"Granite 4.0 1B","value_ratio":0},{"name":"Granite 4.0 H 350M","slug":"granite-4-0-h-350m","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 H 350M","display_name":"Granite 4.0 H 350M","value_ratio":0},{"name":"Qwen3.5 0.8B","slug":"qwen3-5-0-8b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Alibaba","color":"#ff6a00","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Qwen3.5 0.8B","display_name":"阿里巴巴 Qwen3.5 0.8B","value_ratio":0},{"name":"DeepHermes 3 - Mistral 24B","slug":"deephermes-3-mistral-24b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"DeepHermes 3 - Mistral 24B","display_name":"DeepHermes 3 - Mistral 24B","value_ratio":0},{"name":"NVIDIA Nemotron Nano 12B v2 VL (Non-reasoning)","slug":"nvidia-nemotron-nano-12b-v2-vl-non-reasoning","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":85.0,"creator":"NVIDIA","color":"#76b900","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"NVIDIA Nemotron Nano 12B v2 VL (Non-reasoning)","display_name":"NVIDIA Nemotron Nano 12B v2 VL (Non-reasoning)","value_ratio":0},{"name":"Molmo 7B-D","slug":"molmo-7b-d","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Allen Institute for AI","color":"#f48024","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Molmo 7B-D","display_name":"Molmo 7B-D","value_ratio":0},{"name":"Jamba 1.7 Mini","slug":"jamba-1-7-mini","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"AI21 Labs","color":"#6c5ce7","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Jamba 1.7 Mini","display_name":"Jamba 1.7 Mini","value_ratio":0},{"name":"DeepHermes 3 - Llama-3.1 8B","slug":"deephermes-3-llama-3-1-8b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Nous Research","color":"#e17055","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"DeepHermes 3 - Llama-3.1 8B","display_name":"DeepHermes 3 - Llama-3.1 8B","value_ratio":0},{"name":"Exaone 4.0 1.2B","slug":"exaone-4-0-1-2b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"LG AI Research","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Exaone 4.0 1.2B","display_name":"Exaone 4.0 1.2B","value_ratio":0},{"name":"Granite 4.0 H 1B","slug":"granite-4-0-h-1b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"IBM","color":"#1f70c1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Granite 4.0 H 1B","display_name":"Granite 4.0 H 1B","value_ratio":0},{"name":"Reka Flash 3","slug":"reka-flash-3","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Reka AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Reka Flash 3","display_name":"Reka Flash 3","value_ratio":0},{"name":"Phi-4","slug":"phi-4","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":40.0,"creator":"Microsoft","color":"#00a1f1","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"Phi-4","display_name":"Phi-4","value_ratio":0},{"name":"Jamba Reasoning 3B","slug":"jamba-reasoning-3b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"AI21 Labs","color":"#6c5ce7","release_date":"2026-09-07","deprecated":false,"reasoning":true,"short_name":"Jamba Reasoning 3B","display_name":"Jamba Reasoning 3B","value_ratio":0},{"name":"LFM2 24B A2B","slug":"lfm2-24b-a2b","intelligence_index":1.0,"cost_per_task":0,"input_price_per_m":0,"output_price_per_m":0,"speed":null,"creator":"Liquid AI","color":"#888888","release_date":"2026-09-07","deprecated":false,"reasoning":false,"short_name":"LFM2 24B A2B","display_name":"LFM2 24B A2B","value_ratio":0}];
+
+
+// ==================== 缓存 + 增量更新逻辑 ====================
+const CACHE_KEY = 'ai_kill_line_data_cache_v10'; // v10: 修复免费模型搜索定位 + X轴选项扩展
+const CACHE_TIME_KEY = 'ai_kill_line_cache_time_v10';
+const CACHE_EXPIRY = 3600000; // 1小时后强制重新抓取
+
+// 主动清除所有旧版本缓存，防止旧数据覆盖新 BUILTIN_DATA
+try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('ai_kill_line_') && !key.endsWith('_v10')) {
+            localStorage.removeItem(key);
+            console.log('[AI斩杀线] 清除旧缓存: ' + key);
+        }
+    }
+} catch(e) {}
+
+let allData = BUILTIN_DATA;
+let chartModels = null; // 图表中实际渲染的圆圈模型列表（搜索框数据源）
+
+// 读取 localStorage 缓存
+function loadCache() {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
+        if (cached) {
+            const data = JSON.parse(cached);
+            if (data && data.length > 10) {
+                const age = cacheTime ? (Date.now() - parseInt(cacheTime)) : 0;
+                console.log('[AI斩杀线] 从缓存加载 ' + data.length + ' 个模型，缓存年龄 ' + Math.round(age/1000) + 's');
+                return data; // 即使过期也返回，作为后备数据
+            }
+        }
+    } catch(e) {
+        console.warn('[AI斩杀线] 读取缓存失败:', e.message);
+    }
+    return null;
+}
+
+// 写入 localStorage 缓存
+function saveCache(data) {
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        console.log('[AI斩杀线] 缓存已保存，' + data.length + ' 个模型');
+    } catch(e) {
+        console.warn('[AI斩杀线] 保存缓存失败:', e.message);
+    }
+}
+
+// 通过 CORS 代理抓取最新数据
+async function fetchLiveData() {
+    const proxies = [
+        'https://corsproxy.io/?url=',
+        'https://api.allorigins.win/raw?url=',
+        'https://api.codetabs.com/v1/proxy/?quest=',
+        'https://thingproxy.freeboard.io/fetch/',
+        'https://cors-anywhere.herokuapp.com/',
+    ];
+    for (const proxy of proxies) {
+        try {
+            const url = proxy + encodeURIComponent(DATA_SOURCE);
+            const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+            if (!resp.ok) continue;
+            const html = await resp.text();
+            if (!html || html.length < 5000) continue;
+            const parsed = parseLeaderboardHTML(html);
+            if (parsed && parsed.length > 10) {
+                // 去重 + IQ 合理性检查
+                const seen = {};
+                const validated = [];
+                for (const m of parsed) {
+                    if (!seen[m.slug]) {
+                        // 确保 IQ 是整数
+                        m.intelligence_index = Math.round(m.intelligence_index);
+                        // IQ 合理性范围: 1-100
+                        if (m.intelligence_index > 0 && m.intelligence_index <= 100) {
+                            seen[m.slug] = m;
+                            validated.push(m);
+                        }
+                    }
+                }
+                if (validated.length > 10) {
+                    console.log('[AI斩杀线] 抓取成功: ' + validated.length + ' 个模型 (via ' + proxy.slice(8,25) + ')');
+                    return validated;
+                }
+                
+            }
+        } catch (e) {
+            console.warn('[AI斩杀线] proxy failed:', proxy.slice(8,25), e.message);
+        }
+    }
+    return null;
+}
+
+// 解析 Artificial Analysis 排行榜 HTML 表格
+function parseLeaderboardHTML(html) {
+    const models = [];
+
+    // 方案1: 解析 <tr> 表格行
+    const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+    for (const row of rows) {
+        const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [];
+        if (cells.length < 6) continue;
+        const getText = (cell) => cell.replace(/<[^>]*>/g, '').trim();
+        const name = getText(cells[0]);
+        if (!name || name.length < 2 || name === 'Model') continue;
+        const creator = getText(cells[2]) || 'Unknown';
+        if (creator === 'Creator') continue;
+        const intelligence = Math.round(parseFloat(getText(cells[3])) || 0);
+        if (intelligence <= 0 || intelligence > 100) continue;
+        const costStr = getText(cells[4]).replace(/[$,]/g, '');
+        const cost = parseFloat(costStr) || 0;
+        // speed 可能是 -- 或数字
+        let speed = null;
+        const speedMatch = getText(cells[5]).match(/[\d.]+/);
+        if (speedMatch) speed = parseFloat(speedMatch[0]);
+
+        const color = getVendorColor(creator);
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const value_ratio = cost > 0 ? intelligence / cost : 0;
+        const isReasoning = /reason|max|xhigh|high|medium|low/i.test(name);
+        models.push({
+            name, slug, intelligence_index: intelligence,
+            cost_per_task: cost, input_price_per_m: 0, output_price_per_m: 0,
+            speed, creator, color,
+            release_date: new Date().toISOString().slice(0,10), deprecated: false,
+            reasoning: isReasoning,
+            short_name: name.length > 30 ? name.substring(0, 28) + '…' : name,
+            value_ratio,
+            display_name: getDisplayName(name, creator),
+        });
+    }
+
+    // 方案2: 解析 Markdown 表格 (allorigins 有时返回 markdown)
+    // 无论方案1是否成功，都尝试方案2以补充更多模型
+    {const mdRows = html.split('\n').filter(l => l.startsWith('|') && !l.includes('---'));
+        for (const row of mdRows) {
+            const cols = row.split('|').map(c => c.trim()).filter(c => c);
+            if (cols.length < 6) continue;
+            // 跳过表头行
+            if (cols[0] === 'Model' || cols[0].includes('Features')) continue;
+            const name = cols[0];
+            if (!name || name.length < 2) continue;
+            // 清理 creator 中的 markdown 图片语法: ![alt](url)Creator -> Creator
+            let creator = cols[2] || 'Unknown';
+            creator = creator.replace(/!\[[^\]]*\]\([^)]*\)/g, '').trim();
+            const intelligence = Math.round(parseFloat(cols[3]) || 0);
+            if (intelligence <= 0 || intelligence > 100) continue;
+            const costStr = (cols[4] || '').replace(/[$,]/g, '');
+            const cost = parseFloat(costStr) || 0;
+            // speed 可能是 -- 或数字
+            let speed = null;
+            const speedMatch = cols[5].match(/[\d.]+/);
+            if (speedMatch) speed = parseFloat(speedMatch[0]);
+
+            const color = getVendorColor(creator);
+            const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            const value_ratio = cost > 0 ? intelligence / cost : 0;
+            const isReasoning = /reason|max|xhigh|high|medium|low/i.test(name);
+            models.push({
+                name, slug, intelligence_index: intelligence,
+                cost_per_task: cost, input_price_per_m: 0, output_price_per_m: 0,
+                speed, creator, color,
+                release_date: new Date().toISOString().slice(0,10), deprecated: false,
+                reasoning: isReasoning,
+                short_name: name.length > 30 ? name.substring(0, 28) + '…' : name,
+                value_ratio,
+                display_name: getDisplayName(name, creator),
+            });
+        }
+    }
+
+    // 方案3: 逐行扫描文本，用简单正则提取每行的管道分隔字段
+    // 避免使用复杂嵌套正则导致灾难性回溯
+    const lines = html.split('\n');
+    for (const line of lines) {
+        // 只处理包含管道符且含数字的行
+        if (!line.includes('|') || !/\d/.test(line)) continue;
+        // 快速跳过表头/分隔行
+        if (line.includes('---') || line.includes('Model')) continue;
+        const cols = line.split('|').map(c => c.trim()).filter(c => c);
+        if (cols.length < 5) continue;
+        const name = cols[0].replace(/<[^>]*>/g, '').trim();
+        if (!name || name.length < 2) continue;
+        let creator = cols[2] || 'Unknown';
+        creator = creator.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/<[^>]*>/g, '').trim();
+        if (!creator) continue;
+        const intelligence = parseInt(cols[3]);
+        if (!intelligence || intelligence <= 0 || intelligence > 100) continue;
+        const costStr = (cols[4] || '').replace(/[$,]/g, '');
+        const cost = parseFloat(costStr) || 0;
+        let speed = null;
+        const speedMatch = (cols[5] || '').match(/[\d.]+/);
+        if (speedMatch) speed = parseFloat(speedMatch[0]);
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        // 如果已有此 slug 则跳过（O(1) 查重）
+        if (models.some(m => m.slug === slug)) continue;
+        const color = getVendorColor(creator);
+        const value_ratio = cost > 0 ? intelligence / cost : 0;
+        const isReasoning = /reason|max|xhigh|high|medium|low/i.test(name);
+        models.push({
+            name, slug, intelligence_index: intelligence,
+            cost_per_task: cost, input_price_per_m: 0, output_price_per_m: 0,
+            speed, creator, color,
+            release_date: new Date().toISOString().slice(0,10), deprecated: false,
+            reasoning: isReasoning,
+            short_name: name.length > 30 ? name.substring(0, 28) + '…' : name,
+            value_ratio,
+            display_name: getDisplayName(name, creator),
+        });
+    }
+
+    // 去重：同一 slug 只保留一条
+    const seen = {};
+    const deduped = [];
+    for (const m of models) {
+        if (!seen[m.slug]) {
+            seen[m.slug] = m;
+            deduped.push(m);
+        }
+    }
+    return deduped;
+}
+
+function getVendorColor(creator) {
+    const colors = {
+        'Anthropic': '#cc785c', 'OpenAI': '#10a37f', 'Google': '#34A853',
+        'SpaceXAI': '#736cd3', 'Meta': '#0089f4', 'Kimi': '#047AFE',
+        'Z AI': '#1c7ff8', 'Alibaba': '#ff7018', 'DeepSeek': '#2243e6',
+        'NVIDIA': '#76b900', 'Mistral': '#fd6f00', 'IBM': '#0f62fe',
+        'SenseTime': '#E63946', 'Xiaomi': '#ff6900', 'MiniMax': '#EB3568',
+        'Tencent': '#5CB9FF', 'ByteDance': '#3250F2', 'Baidu': '#2932E1',
+        'InclusionAI': '#4fb5ff', 'StepFun': '#017AFF', 'Moonshot': '#047AFE',
+        'Cohere': '#1a73e8', 'Inception Labs': '#FFD700', 'Liquid AI': '#00BCD4',
+        'Reka AI': '#FF6B6B', 'Sarvam': '#FF9933', 'ServiceNow': '#22c55e',
+        'Perplexity': '#f59e0b', 'Prime Intellect': '#a855f7', 'Upstage': '#ec4899',
+        'Microsoft': '#00a4ef', 'Amazon': '#ff9900', 'AI21 Labs': '#6366f1',
+        'Nous Research': '#14b8a6', 'LG AI Research': '#dc2626', 'Naver': '#00c73c',
+        'SK Telecom': '#e11d48', 'Thinking Machines': '#7c3aed', 'TII UAE': '#0891b2',
+        'Celeris': '#4CAF50', 'Nex AGI': '#f472b6', 'OpenBMB': '#3b82f6',
+        'LongCat': '#84cc16', 'Arcee AI': '#f97316', 'Apodex': '#06b6d4',
+        'AI9Stars': '#8b5cf6', 'Trillion Labs': '#10b981', 'Sapiens AI': '#f43f5e',
+        'Nanbeige': '#64748b', 'China Mobile': '#0ea5e9', 'Korea Telecom': '#dc2626',
+        'Motif Technologies': '#a78bfa', 'Multiverse Computing': '#22d3ee',
+        'KwaiKAT': '#fb923c', 'MBZUAI Institute of Foundation Models': '#6ee7b7',
+        'Swiss AI Initiative': '#fde047', 'Allen Institute for AI': '#475569',
+        'ByteDance Seed': '#3250F2', 'Inception': '#FFD700',
+    };
+    // 模糊匹配：上面没命中时尝试部分匹配
+    if (!colors[creator]) {
+        if (/spacex|grok/i.test(creator)) return '#736cd3';
+        if (/moonshot|kimi/i.test(creator)) return '#047AFE';
+        if (/bytedance|seed/i.test(creator)) return '#3250F2';
+    }
+    return colors[creator] || '#888';
+}
+
+function getDisplayName(name, creator) {
+    const cn = {
+        'Anthropic': '', 'OpenAI': '', 'Google': '', 'SpaceXAI': 'xAI ',
+        'Meta': '', 'Kimi': '月之暗面 ', 'Z AI': '智谱AI ',
+        'Alibaba': '阿里巴巴 ', 'DeepSeek': '深度求索 ',
+        'NVIDIA': '', 'Mistral': '', 'IBM': '',
+        'SenseTime': '商汤科技 ', 'Xiaomi': '小米 ',
+        'MiniMax': '', 'Tencent': '腾讯 ', 'ByteDance': '字节跳动 ',
+        'Baidu': '百度 ', 'InclusionAI': '蚂蚁集团 ',
+        'StepFun': '阶跃星辰 ',
+    };
+    return (cn[creator] || '') + name;
+}
+
+// ==================== 初始化流程 ====================
+// 1. 先用缓存或内置数据秒加载
+// 2. 后台异步抓取最新数据
+// 3. 抓取成功 → 更新缓存 + 刷新图表
+// 4. 抓取失败 → 保持缓存/内置数据
+async function initData() {
+// Step 1: 优先使用缓存数据（即使过期也用作后备），没有缓存则用内置数据
+const cached = loadCache();
+if (cached && cached.length >= BUILTIN_DATA.length) {
+allData = cached;
+document.getElementById('dateBadge').textContent = '📅 缓存数据 · ' + allData.length + ' 个模型 · 后台检查更新中...';
+} else if (cached && cached.length > 10) {
+// 缓存模型数虽少于内置数据（可能是旧版本），但仍可用，合并两者
+const mergedBySlug = {};
+BUILTIN_DATA.forEach(m => { mergedBySlug[m.slug] = m; });
+cached.forEach(m => { if (!mergedBySlug[m.slug]) mergedBySlug[m.slug] = m; });
+allData = Object.values(mergedBySlug);
+document.getElementById('dateBadge').textContent = '📅 缓存+内置数据 · ' + allData.length + ' 个模型 · 后台检查更新中...';
+} else {
+// 首次打开，使用内置数据
+allData = BUILTIN_DATA;
+document.getElementById('dateBadge').textContent = '📅 2026-09-06 内置数据 · ' + allData.length + ' 个模型 · 后台抓取中...';
+}
+    document.getElementById('updateStatus').innerHTML = '⟳ 后台更新中...';
+    renderAll();
+
+    // Step 2: 后台异步抓取最新数据（不阻塞页面）
+    try {
+        const liveData = await fetchLiveData();
+        if (liveData && liveData.length > 10) {
+            // 合并策略：以当前 allData（缓存+内置）为基底，用抓取数据补充新模型
+            // 同时用抓取数据更新已有模型的信息（如 IQ、价格可能有更新）
+            const mergedBySlug = {};
+            // 先放当前 allData（保留缓存和内置的精确数据）
+            allData.forEach(m => { mergedBySlug[m.slug] = m; });
+            // 再用抓取数据补充：已有模型更新信息，新模型直接添加
+            liveData.forEach(m => {
+                const existing = mergedBySlug[m.slug];
+                if (existing) {
+                    // 如果抓取数据有更精确的价格/IQ，则更新
+                    if (m.intelligence_index && m.intelligence_index > 0) {
+                        existing.intelligence_index = m.intelligence_index;
+                    }
+                    if (m.cost_per_task && m.cost_per_task > 0) {
+                        existing.cost_per_task = m.cost_per_task;
+                    }
+                    if (m.speed && m.speed > 0) {
+                        existing.speed = m.speed;
+                    }
+                    if (m.input_price_per_m > 0) {
+                        existing.input_price_per_m = m.input_price_per_m;
+                    }
+                    if (m.output_price_per_m > 0) {
+                        existing.output_price_per_m = m.output_price_per_m;
+                    }
+                    // 重新计算性价比
+                    if (existing.cost_per_task > 0) {
+                        existing.value_ratio = existing.intelligence_index / existing.cost_per_task;
+                    }
+                } else {
+                    // 新模型，直接添加
+                    mergedBySlug[m.slug] = m;
+                }
+            });
+            allData = Object.values(mergedBySlug);
+            saveCache(allData); // 保存到缓存
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            document.getElementById('dateBadge').textContent = '📅 ' + dateStr + ' 实时数据 · ' + allData.length + ' 个模型 · 已更新';
+            document.getElementById('updateStatus').innerHTML = '✓ 已更新';
+            renderAll(); // 同步刷新图表、排行榜、搜索、厂商筛选
+            console.log('[AI斩杀线] 数据已更新并缓存，共 ' + allData.length + ' 个模型');
+        } else {
+            // 抓取失败，保持缓存或内置数据
+            if (cached) {
+                document.getElementById('dateBadge').textContent = '📅 缓存数据 · ' + allData.length + ' 个模型 · 抓取失败';
+            } else {
+                document.getElementById('dateBadge').textContent = '📅 2026-09-06 内置数据 · ' + allData.length + ' 个模型 · 抓取失败';
+            }
+            document.getElementById('updateStatus').innerHTML = '⚠ 使用缓存数据';
+            console.log('[AI斩杀线] 抓取失败，使用缓存/内置数据');
+        }
+    } catch(e) {
+        console.warn('[AI斩杀线] 初始化异常:', e.message);
+        document.getElementById('updateStatus').innerHTML = '⚠ 使用内置数据';
+    }
+}
+
+function renderAll() {
+    // 为每个模型计算 AGI 相对水平
+    // IQ 基准: IQ 40 ≈ 人类专家水平 (AGI 100%), IQ 每增加 1 点 ≈ AGI +2.5%
+    // IQ < 20 ≈ AGI 0%, IQ 20-40 对性映射到 AGI 0-100%
+    allData.forEach(m => {
+        if (m.intelligence_index == null) { m.agi_level = 0; return; }
+        // 性射: IQ 20 = 0%, IQ 40 = 100% (人类专家水平), IQ 60 = 200%
+        m.agi_level = Math.max(0, Math.round((m.intelligence_index - 20) / 20 * 100));
+    });
+
+    const vendorMap = {};
+    allData.forEach(m => {
+        if (!vendorMap[m.creator]) vendorMap[m.creator] = { color: m.color, models: [] };
+        vendorMap[m.creator].models.push(m);
+    });
+    window.vendorOrder = Object.keys(vendorMap).sort((a,b) => vendorMap[b].models.length - vendorMap[a].models.length);
+    window.vendorMap = vendorMap;
+
+    const filterDiv = document.getElementById('vendorFilters');
+    filterDiv.innerHTML = '';
+    
+    // 显示所有厂商，不再隐藏（避免搜索定位时厂商chip不存在导致圆圈不显示）
+    const INITIAL_VISIBLE = 999;
+    const vendors = window.vendorOrder;
+    
+    function createChip(v) {
+        const chip = document.createElement('span');
+        chip.className = 'vendor-chip active';
+        chip.dataset.vendor = v;
+        chip.innerHTML = '<span class="dot" style="background:' + vendorMap[v].color + '"></span>' + v + ' <span style="color:#666">(' + vendorMap[v].models.length + ')</span>';
+        chip.onclick = function() { chip.classList.toggle('active'); updateChart(); };
+        return chip;
+    }
+    
+    // Add visible chips
+    for (let i = 0; i < Math.min(INITIAL_VISIBLE, vendors.length); i++) {
+        filterDiv.appendChild(createChip(vendors[i]));
+    }
+    
+    // Add "more" button if there are more vendors
+    if (vendors.length > INITIAL_VISIBLE) {
+        const moreBtn = document.createElement('span');
+        moreBtn.className = 'vendor-more-btn';
+        moreBtn.id = 'vendorMoreBtn';
+        moreBtn.innerHTML = '➕ 更多 (' + (vendors.length - INITIAL_VISIBLE) + ')';
+        moreBtn.onclick = function() {
+            // Add remaining vendors
+            for (let i = INITIAL_VISIBLE; i < vendors.length; i++) {
+                filterDiv.appendChild(createChip(vendors[i]));
+            }
+            // Remove the more button
+            moreBtn.remove();
+        };
+        filterDiv.appendChild(moreBtn);
+    }
+
+    updateChart();
+    updateInfo();
+    
+    // 如果搜索框有内容，触发搜索结果刷新（同步新数据）
+    var sb = document.getElementById('searchBox');
+    if (sb && sb.value.trim()) {
+        sb.dispatchEvent(new Event('input'));
+    }
+}
+
+// 手动更新数据
+async function manualUpdate() {
+    const btn = document.getElementById('manualUpdateBtn');
+    const statusEl = document.getElementById('updateStatus');
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 更新中...'; btn.style.opacity = '0.6'; }
+    if (statusEl) statusEl.innerHTML = '⟳ 手动更新中...';
+    document.getElementById('dateBadge').textContent = '📅 手动抓取中... · ' + allData.length + ' 个模型';
+    
+    try {
+        const liveData = await fetchLiveData();
+        if (liveData && liveData.length > 10) {
+            const mergedBySlug = {};
+            allData.forEach(m => { mergedBySlug[m.slug] = m; });
+            liveData.forEach(m => {
+                const existing = mergedBySlug[m.slug];
+                if (existing) {
+                    if (m.intelligence_index && m.intelligence_index > 0) existing.intelligence_index = m.intelligence_index;
+                    if (m.cost_per_task && m.cost_per_task > 0) existing.cost_per_task = m.cost_per_task;
+                    if (m.speed && m.speed > 0) existing.speed = m.speed;
+                    if (m.input_price_per_m > 0) existing.input_price_per_m = m.input_price_per_m;
+                    if (m.output_price_per_m > 0) existing.output_price_per_m = m.output_price_per_m;
+                    if (existing.cost_per_task > 0) existing.value_ratio = existing.intelligence_index / existing.cost_per_task;
+                } else {
+                    mergedBySlug[m.slug] = m;
+                }
+            });
+            allData = Object.values(mergedBySlug);
+            saveCache(allData);
+            const now = new Date();
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+            document.getElementById('dateBadge').textContent = '📅 ' + dateStr + ' 实时数据 · ' + allData.length + ' 个模型 · 已更新';
+            if (statusEl) statusEl.innerHTML = '✓ 已更新';
+            renderAll();
+            console.log('[AI斩杀线] 手动更新成功，共 ' + allData.length + ' 个模型');
+        } else {
+            if (statusEl) statusEl.innerHTML = '⚠ 更新失败';
+            document.getElementById('dateBadge').textContent = '📅 数据 · ' + allData.length + ' 个模型 · 更新失败';
+        }
+    } catch(e) {
+        console.warn('[AI斩杀线] 手动更新异常:', e.message);
+        if (statusEl) statusEl.innerHTML = '⚠ 更新失败';
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 手动更新'; btn.style.opacity = '1'; }
+    }
+}
+
+// 启动
+initData();
+function paretoFrontier(data, yKey) {
+    yKey = yKey || 'intelligence_index';
+    const sorted = [...data].sort((a, b) => a.cost_per_task - b.cost_per_task);
+    let best = 0;
+    const front = [];
+    for (const m of sorted) {
+        if (m[yKey] > best) { front.push(m); best = m[yKey]; }
+    }
+    return front;
+}
+
+// 全屏切换功能
+function toggleFullscreen() {
+    const container = document.getElementById('chartContainer');
+    const fsText = document.getElementById('fsText');
+    const fsIcon = document.getElementById('fsIcon');
+    
+    if (container.classList.contains('fullscreen')) {
+        container.classList.remove('fullscreen');
+        fsText.textContent = '全屏';
+        fsIcon.textContent = '⛶';
+    } else {
+        container.classList.add('fullscreen');
+        fsText.textContent = '退出全屏';
+        fsIcon.textContent = '🗗';
+    }
+    
+    setTimeout(function() {
+        Plotly.Plots.resize(document.getElementById('chart'));
+    }, 100);
+    
+    if (container.classList.contains('fullscreen')) {
+        document.addEventListener('keydown', escExitFullscreen);
+    } else {
+        document.removeEventListener('keydown', escExitFullscreen);
+    }
+}
+
+function escExitFullscreen(e) {
+    if (e.key === 'Escape') {
+        const container = document.getElementById('chartContainer');
+        if (container.classList.contains('fullscreen')) {
+            toggleFullscreen();
+        }
+    }
+}
+
+window.addEventListener('resize', function() {
+    Plotly.Plots.resize(document.getElementById('chart'));
+});
+
+// ==================== 鼠标滚轮缩放（以鼠标位置为中心） ====================
+// Plotly 默认滚轮缩放以图表中心为基准，这里覆盖为以鼠标位置为中心
+(function() {
+    const chartDiv = document.getElementById('chart');
+    if (!chartDiv) return;
+
+    let wheelTimer = null;
+    let isInteracting = false;
+
+    chartDiv.addEventListener('wheel', function(e) {
+        // 仅在鼠标悬停在绘图区域时拦截
+        const plotArea = chartDiv.querySelector('.plotly .main-svg .nsewdrag');
+        if (!plotArea) {
+            // 回退方案：用 boundingClientRect 判断
+            const gd = chartDiv;
+            const bbox = gd.getBoundingClientRect();
+            // 检查是否在 plot area 内（粗略判断）
+            const margin = { l: 70, r: 20, t: 30, b: 60 };
+            const px = e.clientX - bbox.left;
+            const py = e.clientY - bbox.top;
+            if (px < margin.l || px > bbox.width - margin.r || py < margin.t || py > bbox.height - margin.b) {
+                return; // 在 margin 区域不拦截
+            }
+        }
+
+        e.preventDefault();
+
+        const gd = chartDiv;
+        const bbox = gd.getBoundingClientRect();
+        const px = e.clientX - bbox.left;
+        const py = e.clientY - bbox.top;
+
+        // 获取当前坐标轴范围
+        const layout = gd.layout;
+        if (!layout || !layout.xaxis || !layout.yaxis) return;
+
+        const xDomain = layout.xaxis.domain || [0, 1];
+        const yDomain = layout.yaxis.domain || [0, 1];
+
+        // 获取 plot area 的像素边界
+        const plotInfo = gd._fullLayout || layout;
+        let plotLeft, plotTop, plotWidth, plotHeight;
+
+        if (plotInfo.xaxis && plotInfo.xaxis._offset) {
+            // Plotly 内部布局信息
+            plotLeft = plotInfo.xaxis._offset;
+            plotTop = plotInfo.yaxis._offset;
+            plotWidth = plotInfo.xaxis._length;
+            plotHeight = plotInfo.yaxis._length;
+        } else {
+            // 回退：用默认 margin 估算
+            const ml = (layout.margin && layout.margin.l) || 70;
+            const mt = (layout.margin && layout.margin.t) || 30;
+            const mr = (layout.margin && layout.margin.r) || 20;
+            const mb = (layout.margin && layout.margin.b) || 60;
+            plotLeft = ml;
+            plotTop = mt;
+            plotWidth = bbox.width - ml - mr;
+            plotHeight = bbox.height - mt - mb;
+        }
+
+        // 鼠标在 plot area 内的相对比例 (0~1)
+        const relX = (px - plotLeft) / plotWidth;
+        const relY = (py - plotTop) / plotHeight;
+
+        if (relX < 0 || relX > 1 || relY < 0 || relY > 1) return;
+
+        // 当前 x/y 范围
+        const xRange = layout.xaxis.range;
+        const yRange = layout.yaxis.range;
+        if (!xRange || !yRange) return;
+
+        // 注意：yaxis 可能是反向的（yautoscale 时 range[0] > range[1]）
+        const x0 = xRange[0], x1 = xRange[1];
+        const y0 = yRange[0], y1 = yRange[1];
+
+        // 鼠标位置对应的数据坐标
+        const dataX = x0 + relX * (x1 - x0);
+        const dataY = y0 + (1 - relY) * (y1 - y0); // y 是从下往上的
+
+        // 缩放因子
+        const zoomIn = e.deltaY < 0;
+        const factor = zoomIn ? 0.8 : 1.25;
+
+        // 新范围：以鼠标数据坐标为中心缩放
+        const newX0 = dataX - (dataX - x0) * factor;
+        const newX1 = dataX + (x1 - dataX) * factor;
+        const newY0 = dataY - (dataY - y0) * factor;
+        const newY1 = dataY + (y1 - dataY) * factor;
+
+        // 防止过度缩放（范围过小）
+        if (Math.abs(newX1 - newX0) < 1e-6 || Math.abs(newY1 - newY0) < 1e-6) return;
+
+        // 应用新范围
+        Plotly.relayout(gd, {
+            'xaxis.range': [newX0, newX1],
+            'yaxis.range': [newY0, newY1],
+        });
+
+        // 根据缩放级别动态调整标签字号
+        // 计算缩放比例：原始X范围 / 当前X范围
+        const origXRange = gd._originalXRange || [0.001, 100];
+        const zoomLevel = Math.abs(origXRange[1] - origXRange[0]) / Math.abs(newX1 - newX0);
+        // 基础字号 10，每放大 2 倍 +3，上限 22
+        const fontSize = Math.min(22, Math.round(10 + (zoomLevel > 1 ? Math.log2(zoomLevel) * 3 : 0)));
+        Plotly.restyle(gd, { 'textfont.size': fontSize });
+
+        // 显示缩放指示器
+        showZoomIndicator(zoomIn ? '🔍+' : '🔍-');
+
+    }, { passive: false });
+
+    // 缩放指示器（临时浮动文字）
+    function showZoomIndicator(text) {
+        let indicator = document.getElementById('zoomIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'zoomIndicator';
+            indicator.style.cssText = 'position:absolute;top:50%;right:30px;transform:translateY(-50%);background:rgba(30,30,34,0.9);border:1px solid #555;color:#aaa;padding:4px 10px;border-radius:6px;font-size:0.82rem;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.3s';
+            const container = document.getElementById('chartContainer');
+            if (container) container.appendChild(indicator);
+        }
+        indicator.textContent = text;
+        indicator.style.opacity = '1';
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(function() {
+            indicator.style.opacity = '0';
+        }, 600);
+    }
+})();
+
+// 双击恢复缩放
+document.getElementById('chart').addEventListener('dblclick', function() {
+    // Plotly 默认双击会 autoscale，但我们覆盖了 wheel，需要手动触发
+    const gd = document.getElementById('chart');
+    const layout = gd.layout;
+    if (!layout) return;
+
+    // 重置为自动范围
+    Plotly.relayout(gd, {
+        'xaxis.autorange': true,
+        'yaxis.autorange': true,
+    });
+
+    // 恢复标签字号到默认值
+    Plotly.restyle(gd, { 'textfont.size': 10 });
+
+    showZoomReset();
+});
+
+function showZoomReset() {
+    let indicator = document.getElementById('zoomIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'zoomIndicator';
+        indicator.style.cssText = 'position:absolute;top:50%;right:30px;transform:translateY(-50%);background:rgba(30,30,34,0.9);border:1px solid #555;color:#aaa;padding:4px 10px;border-radius:6px;font-size:0.82rem;pointer-events:none;z-index:200;opacity:0;transition:opacity 0.3s';
+        const container = document.getElementById('chartContainer');
+        if (container) container.appendChild(indicator);
+    }
+    indicator.textContent = '↺ 已重置';
+    indicator.style.opacity = '1';
+    setTimeout(function() { indicator.style.opacity = '0'; }, 800);
+}
+
+// 智能计算标签位置，避免重叠
+// 根据模型在图表中的相对位置，交替使用不同的 textposition
+function calculateTextPositions(models, xKey, yKey) {
+    if (models.length === 0) return [];
+    
+    // 获取当前数据范围
+    const xVals = models.map(m => m[xKey]).filter(v => v != null && v > 0);
+    const yVals = models.map(m => m[yKey]).filter(v => v != null && v > 0);
+    if (xVals.length === 0 || yVals.length === 0) return models.map(() => 'top center');
+    
+    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+    const xRange = xMax - xMin || 1;
+    const yRange = yMax - yMin || 1;
+    
+    // 定义可用的位置（8个方向）
+    const positions = [
+        'top center', 'top left', 'top right',
+        'bottom center', 'bottom left', 'bottom right',
+        'middle left', 'middle right'
+    ];
+    
+    const result = [];
+    const occupied = []; // 记录已占用的网格区域
+    
+    for (let i = 0; i < models.length; i++) {
+        const m = models[i];
+        const x = m[xKey], y = m[yKey];
+        if (x == null || y == null || x <= 0 || y <= 0) {
+            result.push('top center');
+            continue;
+        }
+        
+        // 将坐标归一化到 0-1 范围
+        const nx = (x - xMin) / xRange;
+        const ny = (y - yMin) / yRange;
+        
+        // 根据模型在图表中的位置选择基础方向
+        // 左上角的模型标签放右下，右下角的模型标签放左上，以此类推
+        let basePos;
+        if (nx < 0.3 && ny > 0.7) {
+            basePos = ['top right', 'middle right', 'bottom right'];
+        } else if (nx > 0.7 && ny > 0.7) {
+            basePos = ['top left', 'middle left', 'bottom left'];
+        } else if (nx < 0.3 && ny < 0.3) {
+            basePos = ['top right', 'middle right', 'bottom center'];
+        } else if (nx > 0.7 && ny < 0.3) {
+            basePos = ['top left', 'middle left', 'bottom center'];
+        } else if (ny > 0.7) {
+            basePos = ['top left', 'top right', 'middle left', 'middle right'];
+        } else if (ny < 0.3) {
+            basePos = ['bottom left', 'bottom right', 'middle left', 'middle right'];
+        } else if (nx < 0.3) {
+            basePos = ['middle right', 'top right', 'bottom right'];
+        } else if (nx > 0.7) {
+            basePos = ['middle left', 'top left', 'bottom left'];
+        } else {
+            basePos = ['top center', 'bottom center', 'middle left', 'middle right'];
+        }
+        
+        // 检查附近是否有其他标签，选择不冲突的位置
+        // 使用简单的网格占用检测
+        const gridX = Math.floor(nx * 8);
+        const gridY = Math.floor(ny * 8);
+        
+        let bestPos = basePos[0];
+        let minConflict = Infinity;
+        
+        for (const pos of basePos) {
+            let conflict = 0;
+            for (const occ of occupied) {
+                const dx = Math.abs(occ.gx - gridX);
+                const dy = Math.abs(occ.gy - gridY);
+                // 如果位置相同且距离很近，增加冲突值
+                if (dx <= 1 && dy <= 1 && occ.pos === pos) {
+                    conflict += 10;
+                } else if (dx <= 1 && dy <= 1) {
+                    conflict += 3;
+                } else if (dx <= 2 && dy <= 2) {
+                    conflict += 1;
+                }
+            }
+            // 也考虑索引的奇偶性来分散标签
+            if (pos.includes('left') && i % 2 === 0) conflict += 0.5;
+            if (pos.includes('right') && i % 2 === 1) conflict += 0.5;
+            
+            if (conflict < minConflict) {
+                minConflict = conflict;
+                bestPos = pos;
+            }
+        }
+        
+        occupied.push({ gx: gridX, gy: gridY, pos: bestPos });
+        result.push(bestPos);
+    }
+    
+    return result;
+}
+
+function updateChart() {
+    const xAxis = document.getElementById('xAxis').value;
+    const yAxis = document.getElementById('yAxis').value;
+    const minIQ = parseFloat(document.getElementById('iqFilter').value);
+    const showPareto = document.getElementById('showPareto').checked;
+    const showLabels = document.getElementById('showLabels').checked;
+    const showAGILines = document.getElementById('showAGILines').checked;
+    const logX = document.getElementById('logX').checked;
+
+    const activeVendors = new Set();
+    document.querySelectorAll('.vendor-chip.active').forEach(c => activeVendors.add(c.dataset.vendor));
+
+    const filtered = allData.filter(m =>
+        m.intelligence_index >= minIQ &&
+        activeVendors.has(m.creator) &&
+        m[xAxis] != null && m[xAxis] > 0 &&
+        m[yAxis] != null && m[yAxis] > 0
+    );
+
+    // 兼容: agi_level 可能需要从 intelligence_index 计算
+    if (yAxis === 'agi_level') {
+        allData.forEach(m => {
+            if (m.agi_level == null && m.intelligence_index != null) {
+                m.agi_level = Math.max(0, Math.round((m.intelligence_index - 20) / 20 * 100));
+            }
+        });
+        const filteredAGI = allData.filter(m =>
+            m.intelligence_index >= minIQ &&
+            activeVendors.has(m.creator) &&
+            m.agi_level != null && m.agi_level > 0 &&
+            m[xAxis] != null && m[xAxis] > 0
+        );
+        filtered.length = 0;
+        filteredAGI.forEach(m => filtered.push(m));
+    }
+
+    // 将图表中实际渲染的圆圈模型列表保存为全局变量，供搜索框使用
+    chartModels = filtered;
+
+    const traces = [];
+
+    vendorOrder.forEach(v => {
+        if (!activeVendors.has(v)) return;
+        const models = filtered.filter(m => m.creator === v);
+        if (models.length === 0) return;
+
+        const sizes = models.map(m => {
+            const spd = m.speed || 50;
+            return Math.max(12, Math.min(40, Math.sqrt(spd) * 2.5));
+        });
+
+        const hovertext = models.map(m => {
+            const agi = m.agi_level != null ? m.agi_level : Math.max(0, Math.round((m.intelligence_index - 20) / 20 * 100));
+            return '<b>' + (m.display_name || m.name) + '</b><br>' +
+                '厂商: ' + m.creator + '<br>' +
+                '智能指数: ' + m.intelligence_index.toFixed(1) + '<br>' +
+                'AGI 相对水平: ' + agi + '%<br>' +
+                '每任务成本: $' + m.cost_per_task.toFixed(4) + '<br>' +
+                '输入价格: $' + m.input_price_per_m + '/1M tokens<br>' +
+                '输出价格: $' + m.output_price_per_m + '/1M tokens<br>' +
+                '速度: ' + (m.speed ? m.speed.toFixed(1) + ' tok/s' : 'N/A') + '<br>' +
+                '发布: ' + m.release_date + '<br>' +
+                '推理: ' + (m.reasoning ? '是' : '否') + '<br>' +
+                '性价比: ' + m.value_ratio.toFixed(1) + ' IQ/$';
+        });
+
+        // 为每个模型的标签计算偏移位置，避免重叠
+        const textPositions = calculateTextPositions(models, xAxis, yAxis);
+
+        traces.push({ 
+            x: models.map(m => m[xAxis]), 
+            y: models.map(m => m[yAxis]), 
+            mode: 'markers+text', 
+            text: showLabels ? models.map(m => m.display_name || m.name) : '', 
+            textposition: showLabels ? textPositions : 'top center', 
+            textfont: { size: 10, color: '#bbb' },
+            marker: {
+                size: sizes,
+                color: vendorMap[v].color,
+                opacity: 0.85,
+                line: { color: 'white', width: 1 }
+            },
+            name: v,
+            hovertext: hovertext,
+            hovertemplate: '%{hovertext}<extra></extra>',
+        });
+    });
+
+    if (showPareto && filtered.length > 0 && (yAxis === 'intelligence_index' || yAxis === 'agi_level') && xAxis === 'cost_per_task') {
+        const front = paretoFrontier(filtered, yAxis);
+        traces.push({
+            x: front.map(m => m[xAxis]),
+            y: front.map(m => m[yAxis]),
+            mode: 'lines',
+            line: { color: 'white', width: 2, dash: 'dash' },
+            opacity: 0.3,
+            name: '帕累托前沿',
+            hoverinfo: 'skip',
+        });
+    }
+
+    const xAxisTitle = {
+        cost_per_task: '每任务成本 (USD) ← 越便宜越好',
+        input_price_per_m: '输入价格 ($/1M tokens) ← 越便宜越好',
+        output_price_per_m: '输出价格 ($/1M tokens) ← 越便宜越好',
+    }[xAxis];
+
+    const yAxisTitle = {
+        intelligence_index: '智能指数 (Intelligence Index) ↑ 越高越好',
+        agi_level: 'AGI 相对水平 (%) ↑ 100% = 人类专家水平',
+        speed: '输出速度 (tokens/s) ↑ 越高越好',
+        value_ratio: '性价比 (IQ / $) ↑ 越高越好',
+    }[yAxis];
+
+    // AGI 水平参考线
+    // IQ 40 = 100% AGI (人类专家水平)
+    // IQ 50 = 150% AGI (超越人类专家)
+    // IQ 30 = 50% AGI (接近人类专家)
+    // IQ 20 = 0% AGI
+    const agiShapes = [];
+    const agiAnnotations = [];
+    if (showAGILines) {
+        // 当 Y 轴是 intelligence_index 时，直接用 IQ 值画线
+        // 当 Y 轴是 agi_level 时，用百分比画线
+        const agiLevels = [
+            { iq: 20, agi: 0,   label: 'AGI 0% (初学者水平)', color: '#555' },
+            { iq: 30, agi: 50,  label: 'AGI 50% (接近人类专家)', color: '#888' },
+            { iq: 40, agi: 100, label: 'AGI 100% ★ 人类专家水平', color: '#4CAF50' },
+            { iq: 50, agi: 150, label: 'AGI 150% (超越人类专家)', color: '#cc785c' },
+            { iq: 60, agi: 200, label: 'AGI 200% (远超人类专家)', color: '#764ba2' },
+        ];
+        agiLevels.forEach(lv => {
+            const yVal = yAxis === 'agi_level' ? lv.agi : lv.iq;
+            agiShapes.push({
+                type: 'line',
+                xref: 'paper', yref: 'y',
+                x0: 0, y0: yVal, x1: 1, y1: yVal,
+                line: { color: lv.color, width: 1, dash: 'dot' },
+                opacity: 0.6,
+            });
+            agiAnnotations.push({
+                x: 1, y: yVal, xref: 'paper', yref: 'y',
+                text: lv.label,
+                showarrow: false,
+                xanchor: 'left', yanchor: 'bottom',
+                font: { size: 9, color: lv.color },
+                bgcolor: 'rgba(13,13,15,0.8)',
+                bordercolor: lv.color, borderwidth: 0, borderpad: 2,
+            });
+        });
+    }
+
+    const layout = {
+        paper_bgcolor: '#0d0d0f',
+        plot_bgcolor: '#161618',
+        font: { color: '#e0e0e0', family: 'Segoe UI, Microsoft YaHei, sans-serif', size: 13 },
+        xaxis: {
+            title: { text: xAxisTitle, font: { size: 14 } },
+            type: logX ? 'log' : 'linear',
+            gridcolor: '#222',
+            zerolinecolor: '#222',
+        },
+        yaxis: {
+            title: { text: yAxisTitle, font: { size: 14 } },
+            gridcolor: '#222',
+            zerolinecolor: '#222',
+        },
+        shapes: agiShapes,
+        annotations: agiAnnotations,
+        legend: {
+            orientation: 'v', yanchor: 'top', y: 1, xanchor: 'right', x: 1.02,
+            bgcolor: 'rgba(30,30,34,0.9)', bordercolor: '#333', font: { size: 11 },
+        },
+        margin: { l: 70, r: 20, t: 30, b: 60 },
+        showlegend: true,
+        hovermode: 'closest',
+        hoverlabel: { bgcolor: '#1e1e22', bordercolor: '#444', font: { size: 12 } },
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ['lasso2d'],
+        modeBarButtonsToAdd: [{
+            name: '全屏切换',
+            icon: { 'width': 24, 'height': 24, 'path': 'M3 3h7v2H5v5H3V3zm14 0v7h-2V5h-5V3h7zM3 14h2v5h5v2H3v-7zm16 0h2v7h-7v-2h5v-5z' },
+            click: function(gd) { toggleFullscreen(); }
+        }],
+        toImageButtonOptions: { format: 'png', filename: 'ai_kill_line_2026', height: 1080, width: 1920, scale: 2 },
+        displaylogo: false,
+    };
+
+    Plotly.react('chart', traces, layout, config);
+
+    // 记录原始 X 轴范围，用于滚轮缩放时计算缩放比例
+    const gd = document.getElementById('chart');
+    if (gd && gd.layout && gd.layout.xaxis && gd.layout.xaxis.range) {
+        gd._originalXRange = gd.layout.xaxis.range.slice();
+    }
+
+    // 汉化工具栏提示文字
+    setTimeout(function() {
+        const modebar = document.querySelector('.modebar');
+        if (modebar) {
+            modebar.querySelectorAll('[data-title]').forEach(function(btn) {
+                const title = btn.getAttribute('data-title');
+                const map = {
+                    'Produced with Plotly': '使用 Plotly 生成',
+                    'Pan': '平移',
+                    'Box Select': '框选',
+                    'Zoom': '缩放',
+                    'Zoom In': '放大',
+                    'Zoom Out': '缩小',
+                    'AutoScale': '自适应缩放',
+                    'Reset Axes': '重置坐标轴',
+                    'Toggle Spike Lines': '切换辅助线',
+                    'Show closest data on hover': '悬停显示最近数据',
+                    'Compare data on hover': '悬停对比数据',
+                    'Download plot as a png': '下载图片 (PNG)',
+                    'Download plot': '下载图片',
+                    'Screenshot': '截图',
+                    'toImage': '下载图片',
+                    'select2d': '框选',
+                    'lasso2d': '套索选择',
+                    'zoomIn2d': '放大',
+                    'zoomOut2d': '缩小',
+                    'autoScale2d': '自适应',
+                    'resetScale2d': '重置缩放',
+                    'hoverClosestCartesian': '显示最近数据',
+                    'hoverCompareCartesian': '对比数据',
+                    'toggleSpikelines': '辅助线',
+                };
+                if (map[title]) {
+                    btn.setAttribute('data-title', map[title]);
+                }
+            });
+        }
+    }, 100);
+}
+
+function updateInfo() {
+    const grid = document.getElementById('infoGrid');
+    const bestValue = [...allData].sort((a,b) => b.value_ratio - a.value_ratio).slice(0, 10);
+    const topPerf = [...allData].sort((a,b) => b.intelligence_index - a.intelligence_index).slice(0, 10);
+    const fastest = [...allData].filter(m => m.speed).sort((a,b) => b.speed - a.speed).slice(0, 10);
+
+    function card(title, icon, color, data, valKey, valFn, extKey, extFn, cls) {
+        let rows = data.map(m => '<tr><td>' + m.display_name + '</td>' +
+            '<td class="num ' + cls + '">' + valFn(m[valKey]) + '</td>' +
+            '<td class="num">' + extFn(m[extKey]) + '</td>' +
+            '<td style="color:#888;font-size:0.8rem">' + m.creator + '</td></tr>').join('');
+        return '<div class="info-card"><h3><span class="icon" style="background:' + color + ';color:white">' + icon + '</span>' + title + '</h3><table><thead><tr><th>模型</th><th class="num">' + (valKey === 'value_ratio' ? 'IQ/$' : valKey === 'intelligence_index' ? 'IQ' : 'tok/s') + '</th><th class="num">成本</th><th>厂商</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    }
+
+    grid.innerHTML =
+        card('💰 最佳性价比 Top 10', '💰', '#4CAF50', bestValue, 'value_ratio', v => v.toFixed(1), 'cost_per_task', v => '$' + v.toFixed(4), 'best-value') +
+        card('🏆 性能最强 Top 10', '🏆', '#cc785c', topPerf, 'intelligence_index', v => v.toFixed(1), 'cost_per_task', v => '$' + v.toFixed(4), 'top-perf') +
+        card('⚡ 速度最快 Top 10', '⚡', '#34A853', fastest, 'speed', v => Math.round(v), 'cost_per_task', v => '$' + v.toFixed(4), 'fastest');
+}
+
+// ==================== 搜索功能 ====================
+const searchBox = document.getElementById('searchBox');
+const searchResults = document.getElementById('searchResults');
+
+searchBox.addEventListener('input', function() {
+    const query = this.value.trim().toLowerCase();
+    if (!query) {
+        searchResults.classList.remove('show');
+        return;
+    }
+    
+        const matches = allData.filter(m => 
+        (m.name || '').toLowerCase().includes(query) || 
+        (m.short_name || '').toLowerCase().includes(query) ||
+        (m.display_name || '').toLowerCase().includes(query) ||
+        (m.creator || '').toLowerCase().includes(query)
+    ).sort((a, b) => {
+        const aName = (a.display_name || a.name || '').toLowerCase();
+        const bName = (b.display_name || b.name || '').toLowerCase();
+        const aStart = aName.startsWith(query) ? 0 : 1;
+        const bStart = bName.startsWith(query) ? 0 : 1;
+        if (aStart !== bStart) return aStart - bStart;
+        return aName.localeCompare(bName);
+    }).slice(0, 20);
+    
+    if (matches.length === 0) {
+        searchResults.innerHTML = '<div class="search-item" style="color:#666;cursor:default">无匹配结果</div>';
+        searchResults.classList.add('show');
+        return;
+    }
+    
+    function highlight(text, query) {
+        const lower = text.toLowerCase();
+        const idx = lower.indexOf(query);
+        if (idx === -1) return text;
+        return text.substring(0, idx) + '<span class="search-highlight">' + text.substring(idx, idx + query.length) + '</span>' + text.substring(idx + query.length);
+    }
+    
+    searchResults.innerHTML = matches.map(m => 
+        '<div class="search-item" onclick="locateModel(\'' + m.slug + '\')" data-slug="' + m.slug + '">' +
+            '<span class="dot" style="background:' + m.color + '"></span>' +
+            '<span class="name">' + highlight(m.display_name || m.name, query) + '</span>' +
+            '<span class="meta"><span class="iq">IQ ' + (m.intelligence_index || 0).toFixed(1) + '</span> <span class="cost">' + (m.cost_per_task > 0 ? '$' + m.cost_per_task.toFixed(3) : '--') + '</span></span>' +
+        '</div>'
+    ).join('');
+    searchResults.classList.add('show');
+});
+
+document.addEventListener('click', function(e) {
+    if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.remove('show');
+    }
+});
+
+searchBox.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const firstItem = searchResults.querySelector('.search-item[data-slug]');
+        if (firstItem) {
+            locateModel(firstItem.dataset.slug);
+        }
+    } else if (e.key === 'Escape') {
+        searchResults.classList.remove('show');
+        searchBox.blur();
+    }
+});
+
+// 定位模型并发光
+function locateModel(slug) { 
+    const model = allData.find(m => m.slug === slug); 
+    if (!model) return; 
+     
+    searchResults.classList.remove('show'); 
+    searchBox.value = model.display_name || model.name; 
+     
+    // 确保该模型厂商是激活的
+    // 如果厂商 chip 不存在（可能隐藏在"更多"按钮后面），先展开所有厂商
+    let vendorChip = document.querySelector('.vendor-chip[data-vendor="' + model.creator + '"]');
+    if (!vendorChip) {
+        // 展开"更多"按钮，显示所有厂商
+        const moreBtn = document.getElementById('vendorMoreBtn');
+        if (moreBtn) moreBtn.click();
+        // 重新查找 chip
+        vendorChip = document.querySelector('.vendor-chip[data-vendor="' + model.creator + '"]');
+    }
+    if (vendorChip && !vendorChip.classList.contains('active')) {
+        vendorChip.classList.add('active');
+    } 
+     
+    // 确保 IQ 过滤不排除该模型 
+    const iqFilter = document.getElementById('iqFilter'); 
+    if (parseFloat(iqFilter.value) > model.intelligence_index) { 
+        iqFilter.value = Math.floor(model.intelligence_index); 
+        document.getElementById('iqLabel').textContent = iqFilter.value; 
+    } 
+     
+    const xAxisSel = document.getElementById('xAxis'); 
+    const yAxisSel = document.getElementById('yAxis'); 
+    let xAxis = xAxisSel.value; 
+    let yAxis = yAxisSel.value; 
+     
+    // 检查模型在当前坐标轴下是否有有效值
+    function hasValidVal(model, axis) {
+        return model[axis] != null && model[axis] > 0;
+    }
+    
+    let xVal = model[xAxis]; 
+    let yVal = model[yAxis]; 
+    let needAxisSwitch = false;
+    
+    // 如果当前轴下模型没有有效值，尝试找到一组能显示该模型的轴
+    if (!hasValidVal(model, xAxis) || !hasValidVal(model, yAxis)) { 
+        needAxisSwitch = true;
+        // 只使用 X 轴选择器中实际存在的选项
+        // xAxis 选择器有: cost_per_task, input_price_per_m, output_price_per_m, speed, intelligence_index, value_ratio
+        // yAxis 选择器有: intelligence_index, agi_level, speed, value_ratio
+        const xCandidates = ['cost_per_task', 'input_price_per_m', 'output_price_per_m', 'speed', 'intelligence_index', 'value_ratio'];
+        const yCandidates = ['intelligence_index', 'speed', 'value_ratio'];
+        let found = false;
+        // 优先尝试 cost_per_task vs intelligence_index
+        if (hasValidVal(model, 'cost_per_task') && hasValidVal(model, 'intelligence_index')) {
+            xAxis = 'cost_per_task'; yAxis = 'intelligence_index';
+            xVal = model[xAxis]; yVal = model[yAxis];
+            found = true;
+        }
+        // 尝试 speed vs intelligence_index (X=speed, Y=IQ)
+        if (!found && hasValidVal(model, 'speed') && hasValidVal(model, 'intelligence_index')) {
+            xAxis = 'speed'; yAxis = 'intelligence_index';
+            xVal = model[xAxis]; yVal = model[yAxis];
+            found = true;
+        }
+        // 尝试 cost_per_task vs speed
+        if (!found && hasValidVal(model, 'cost_per_task') && hasValidVal(model, 'speed')) {
+            xAxis = 'cost_per_task'; yAxis = 'speed';
+            xVal = model[xAxis]; yVal = model[yAxis];
+            found = true;
+        }
+        // 尝试 intelligence_index vs speed (X=IQ, Y=speed)
+        if (!found && hasValidVal(model, 'intelligence_index') && hasValidVal(model, 'speed')) {
+            xAxis = 'intelligence_index'; yAxis = 'speed';
+            xVal = model[xAxis]; yVal = model[yAxis];
+            found = true;
+        }
+        // 尝试遍历所有组合
+        if (!found) {
+            for (const xc of xCandidates) {
+                for (const yc of yCandidates) {
+                    if (xc === yc) continue;
+                    if (hasValidVal(model, xc) && hasValidVal(model, yc)) {
+                        xAxis = xc; yAxis = yc;
+                        xVal = model[xAxis]; yVal = model[yAxis];
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+        }
+        // 如果仍然没找到，用 intelligence_index vs speed，用默认值代替缺失值
+        if (!found) {
+            xAxis = 'intelligence_index';
+            yAxis = 'speed';
+            xVal = model.intelligence_index || 1;
+            yVal = model.speed || 1;
+        }
+    } 
+    
+    if (needAxisSwitch) {
+        xAxisSel.value = xAxis; 
+        yAxisSel.value = yAxis; 
+    }
+    
+    // 一次性更新图表，确保所有过滤条件生效
+    updateChart();
+    
+    // 等图表渲染完成后，缩放到目标模型位置再画十字
+    setTimeout(function() { 
+        const gd = document.getElementById('chart');
+        
+        // 先触发 Plotly 自动缩放，确保模型在可视范围内
+        Plotly.relayout(gd, {
+            'xaxis.autorange': true,
+            'yaxis.autorange': true,
+        });
+        
+        // 等自动缩放完成后，获取新的坐标范围，然后画十字
+        setTimeout(function() {
+            doGlow(model.slug, xVal, yVal);
+        }, 300);
+    }, 200); 
+}
+
+function doGlow(slug, xVal, yVal) { 
+    const plotDiv = document.getElementById('chart'); 
+    const model = allData.find(m => m.slug === slug);
+    if (!model) return;
+    
+    // 移除旧的搜索标注 
+    const layout = plotDiv.layout; 
+    if (layout.annotations) {
+        layout.annotations = layout.annotations.filter(a => !a._searchGlow);
+    }
+    if (layout.shapes) {
+        layout.shapes = layout.shapes.filter(s => !s._searchGlow);
+    }
+    
+    Plotly.relayout('chart', { 
+        'shapes': layout.shapes || [], 
+        'annotations': layout.annotations || [], 
+    });
+    
+    // ==================== 粒子十字效果 ====================
+    // 在图表上覆盖一个 Canvas 层，绘制粒子十字动画
+    
+    // 清除旧的粒子 Canvas
+    const oldCanvas = document.getElementById('glowCanvas');
+    if (oldCanvas) oldCanvas.remove();
+    
+    // 清除旧的动画帧
+    if (window._glowRAF) cancelAnimationFrame(window._glowRAF);
+    if (window._glowTimeout) clearTimeout(window._glowTimeout);
+    
+    const chartContainer = document.getElementById('chartContainer');
+    const canvas = document.createElement('canvas');
+    canvas.id = 'glowCanvas';
+    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50;';
+    chartContainer.appendChild(canvas);
+    
+    const gd = plotDiv;
+    const fullLayout = gd._fullLayout;
+    
+    function getPixelCoords() {
+        const fl = gd._fullLayout;
+        if (!fl || !fl.xaxis || !fl.yaxis) return null;
+        
+        // 检查模型是否在当前图表的数据范围内
+        // 如果不在，调整坐标轴范围以包含该模型
+        try {
+            const xRange = fl.xaxis.range;
+            const yRange = fl.yaxis.range;
+            if (xRange && yRange) {
+                let needRelayout = false;
+                const relayoutUpdate = {};
+                
+                // 检查 X 值是否在范围内
+                let xValComp = xVal;
+                if (fl.xaxis.type === 'log' && xVal > 0) {
+                    xValComp = Math.log10(xVal);
+                    if (xValComp < xRange[0] || xValComp > xRange[1]) {
+                        // 需要扩展范围
+                        const margin = (xRange[1] - xRange[0]) * 0.1;
+                        relayoutUpdate['xaxis.range'] = [Math.min(xValComp - margin, xRange[0]), Math.max(xValComp + margin, xRange[1])];
+                        needRelayout = true;
+                    }
+                } else {
+                    if (xVal < xRange[0] || xVal > xRange[1]) {
+                        const margin = (xRange[1] - xRange[0]) * 0.1;
+                        relayoutUpdate['xaxis.range'] = [Math.min(xVal - margin, xRange[0]), Math.max(xVal + margin, xRange[1])];
+                        needRelayout = true;
+                    }
+                }
+                
+                // 检查 Y 值是否在范围内
+                let yValComp = yVal;
+                if (fl.yaxis.type === 'log' && yVal > 0) {
+                    yValComp = Math.log10(yVal);
+                    if (yValComp < yRange[0] || yValComp > yRange[1]) {
+                        const margin = (yRange[1] - yRange[0]) * 0.1;
+                        relayoutUpdate['yaxis.range'] = [Math.min(yValComp - margin, yRange[0]), Math.max(yValComp + margin, yRange[1])];
+                        needRelayout = true;
+                    }
+                } else {
+                    if (yVal < yRange[0] || yVal > yRange[1]) {
+                        const margin = (yRange[1] - yRange[0]) * 0.1;
+                        relayoutUpdate['yaxis.range'] = [Math.min(yVal - margin, yRange[0]), Math.max(yVal + margin, yRange[1])];
+                        needRelayout = true;
+                    }
+                }
+                
+                if (needRelayout) {
+                    Plotly.relayout(gd, relayoutUpdate);
+                }
+            }
+        } catch(e) { /* ignore */ }
+        
+        // 使用 Plotly 内置的坐标转换函数，正确处理对数坐标轴
+        let px, py;
+        try {
+            // d2p: data -> pixel（Plotly 内部方法，正确处理 log/linear）
+            px = fl.xaxis.d2p(xVal);
+            py = fl.yaxis.d2p(yVal);
+            // d2p 返回的是相对于 plot area 左上角的像素偏移
+            // 需要加上 plot area 的偏移量
+            px += fl.xaxis._offset;
+            py += fl.yaxis._offset;
+        } catch(e) {
+            // 回退方案：手动计算
+            const plotLeft = fl.xaxis._offset;
+            const plotTop = fl.yaxis._offset;
+            const plotW = fl.xaxis._length;
+            const plotH = fl.yaxis._length;
+            const xRange = gd.layout.xaxis.range;
+            const yRange = gd.layout.yaxis.range;
+            if (!xRange || !yRange) return null;
+            const x0 = xRange[0], x1 = xRange[1];
+            const y0 = yRange[0], y1 = yRange[1];
+            // 对 log 坐标轴做对数变换
+            let nx, ny;
+            if (fl.xaxis.type === 'log') {
+                nx = (Math.log10(xVal) - Math.log10(x0)) / (Math.log10(x1) - Math.log10(x0));
+            } else {
+                nx = (xVal - x0) / (x1 - x0);
+            }
+            if (fl.yaxis.type === 'log') {
+                ny = (Math.log10(yVal) - Math.log10(y0)) / (Math.log10(y1) - Math.log10(y0));
+            } else {
+                ny = (yVal - y0) / (y1 - y0);
+            }
+            px = plotLeft + nx * plotW;
+            py = plotTop + (1 - ny) * plotH;
+        }
+        
+        return { x: px, y: py };
+    }
+    
+    function resizeCanvas() {
+        const rect = chartContainer.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        return ctx;
+    }
+    
+    let ctx = resizeCanvas();
+    
+    // 粒子系统
+    const particles = [];
+    const crossLines = [];
+    
+    // 十字线参数 — 使用灰色光效
+    const crossConfig = {
+        maxRadius: 70,
+        lineWidth: 2,
+        color: '#aaaaaa',
+        glowColor: 'rgba(170, 170, 170, '
+    };
+    
+    // 初始化粒子（十字方向射出的粒子）
+    function spawnParticles(cx, cy) {
+        const directions = [ 
+            { dx: 1, dy: 0 },   // 右 
+            { dx: -1, dy: 0 },  // 左 
+            { dx: 0, dy: 1 },   // 下 
+            { dx: 0, dy: -1 },  // 上 
+        ];
+        
+        for (const dir of directions) {
+            for (let i = 0; i < 2; i++) {
+                // 降低粒子速度，使效果更柔和
+                const speed = 0.4 + Math.random() * 0.6;
+                particles.push({
+                    x: cx,
+                    y: cy,
+                    vx: dir.dx * speed,
+                    vy: dir.dy * speed,
+                    life: 1.0,
+                    decay: 0.008 + Math.random() * 0.012,
+                    size: 1.5 + Math.random() * 1.5,
+                    // 灰色调粒子
+                    color: Math.random() > 0.5 ? '#aaaaaa' : '#dddddd',
+                });
+            }
+        }
+    }
+    
+    const startTime = performance.now();
+    const duration = 2500; // 2.5秒
+    
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        
+        const coords = getPixelCoords();
+        if (!coords) {
+            window._glowRAF = requestAnimationFrame(animate);
+            return;
+        }
+        
+        const cx = coords.x;
+        const cy = coords.y;
+        
+        // 重新调整 canvas 大小（以防窗口变化）
+        const rect = chartContainer.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+            ctx = resizeCanvas();
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制十字线（从中心向外扩展）
+        if (progress < 0.6) {
+            const expandProgress = progress / 0.6;
+            const currentRadius = crossConfig.maxRadius * expandProgress;
+            const fadeAlpha = 1 - expandProgress;
+            
+            ctx.save();
+            
+            // 十字线（水平 + 垂直）
+            ctx.strokeStyle = crossConfig.glowColor + (fadeAlpha * 0.8) + ')';
+            ctx.lineWidth = crossConfig.lineWidth;
+            ctx.shadowColor = crossConfig.color;
+            ctx.shadowBlur = 10;
+            
+            // 水平线
+            ctx.beginPath();
+            ctx.moveTo(cx - currentRadius, cy);
+            ctx.lineTo(cx + currentRadius, cy);
+            ctx.stroke();
+            
+            // 垂直线
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - currentRadius);
+            ctx.lineTo(cx, cy + currentRadius);
+            ctx.stroke();
+            
+            // 中心光点
+            const pulseSize = 4 + Math.sin(elapsed * 0.01) * 2;
+            ctx.fillStyle = crossConfig.glowColor + (fadeAlpha * 0.5) + ')';
+            ctx.beginPath();
+            ctx.arc(cx, cy, pulseSize * 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 中心亮点用白色
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + fadeAlpha + ')';
+            ctx.beginPath();
+            ctx.arc(cx, cy, pulseSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // 在十字线扩展过程中持续生成粒子
+            if (progress < 0.3 && Math.random() > 0.3) {
+                spawnParticles(cx, cy);
+            }
+        }
+        
+        // 绘制模型名称标签（跟随光效，始终显示直到动画结束）
+        if (progress < 0.85) {
+            const labelAlpha = progress < 0.15 ? progress / 0.15 : (progress > 0.7 ? (0.85 - progress) / 0.15 : 1);
+            const labelText = model.display_name || model.name;
+            ctx.save();
+            ctx.font = 'bold 13px "Segoe UI", "Microsoft YaHei", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.shadowColor = crossConfig.color;
+            ctx.shadowBlur = 8;
+            
+            // 背景圆角矩形
+            const textWidth = ctx.measureText(labelText).width;
+            const bgX = cx - textWidth / 2 - 8;
+            const bgY = cy - 50;
+            const bgW = textWidth + 16;
+            const bgH = 24;
+            ctx.fillStyle = 'rgba(170, 170, 170, ' + (0.9 * labelAlpha) + ')';
+            ctx.beginPath();
+            // 手动圆角矩形（兼容所有浏览器）
+            var r = 6;
+            ctx.moveTo(bgX + r, bgY);
+            ctx.lineTo(bgX + bgW - r, bgY);
+            ctx.arcTo(bgX + bgW, bgY, bgX + bgW, bgY + r, r);
+            ctx.lineTo(bgX + bgW, bgY + bgH - r);
+            ctx.arcTo(bgX + bgW, bgY + bgH, bgX + bgW - r, bgY + bgH, r);
+            ctx.lineTo(bgX + r, bgY + bgH);
+            ctx.arcTo(bgX, bgY + bgH, bgX, bgY + bgH - r, r);
+            ctx.lineTo(bgX, bgY + r);
+            ctx.arcTo(bgX, bgY, bgX + r, bgY, r);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 边框
+            ctx.strokeStyle = 'rgba(170, 170, 170, ' + labelAlpha + ')';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            // 文字
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + labelAlpha + ')';
+            ctx.fillText(labelText, cx, bgY + bgH - 5);
+            
+            // 指向线（从标签底部到中心点）
+            ctx.strokeStyle = 'rgba(170, 170, 170, ' + (0.5 * labelAlpha) + ')';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(cx, bgY + bgH);
+            ctx.lineTo(cx, cy - 8);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.restore();
+        }
+        
+        // 更新和绘制粒子
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= p.decay;
+            
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+                continue;
+            }
+            
+            ctx.save();
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // 动画结束
+        if (progress >= 1 && particles.length === 0) {
+            // 清理
+            const canvasEl = document.getElementById('glowCanvas');
+            if (canvasEl) canvasEl.remove();
+            
+            // 延迟清除（不再有标注需要清除，但保留以防万一）
+            window._glowTimeout = setTimeout(function() {
+                const curLayout = gd.layout;
+                if (curLayout) {
+                    Plotly.relayout('chart', {
+                        'annotations': (curLayout.annotations || []).filter(a => a._searchGlow),
+                    });
+                }
+            }, 2000);
+            
+            return;
+        }
+        
+        window._glowRAF = requestAnimationFrame(animate);
+    }
+    
+    window._glowRAF = requestAnimationFrame(animate);
+    
+    document.getElementById('chart').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+}
+
+</script>
+
+</body>
+</html>
